@@ -1,0 +1,50 @@
+{
+  "$id": "amarbhaiya-functions",
+  "name": "amarbhaiya.in",
+  "functions": [
+    {
+      "$id": "payment-webhook",
+      "name": "Payment Webhook Handler",
+      "runtime": "node-18.0",
+      "entrypoint": "src/main.ts",
+      "path": "appwrite/functions/payment-webhook",
+      "commands": "npm install",
+      "events": [],
+      "schedule": "",
+      "timeout": 30
+    },
+    {
+      "$id": "create-enrollment",
+      "name": "Create Enrollment",
+      "runtime": "node-18.0",
+      "entrypoint": "src/main.ts",
+      "path": "appwrite/functions/create-enrollment",
+      "commands": "npm install",
+      "events": ["databases.*.collections.payments.documents.*.update"],
+      "schedule": "",
+      "timeout": 30
+    },
+    {
+      "$id": "send-certificate",
+      "name": "Send Certificate",
+      "runtime": "node-18.0",
+      "entrypoint": "src/main.ts",
+      "path": "appwrite/functions/send-certificate",
+      "commands": "npm install",
+      "events": ["databases.*.collections.certificates.documents.*.create"],
+      "schedule": "",
+      "timeout": 60
+    },
+    {
+      "$id": "moderation-actions",
+      "name": "Moderation Actions",
+      "runtime": "node-18.0",
+      "entrypoint": "src/main.ts",
+      "path": "appwrite/functions/moderation-actions",
+      "commands": "npm install",
+      "events": ["databases.*.collections.moderation-actions.documents.*.create"],
+      "schedule": "",
+      "timeout": 30
+    }
+  ]
+}
