@@ -31,6 +31,17 @@ If using webhook app-secret hardening, set:
 - RAZORPAY_WEBHOOK_APP_SECRET
 - PHONEPE_WEBHOOK_APP_SECRET
 
+### Vercel Sensitive Variable Limitation
+
+Vercel does not allow creating Sensitive Environment Variables with target `development`.
+Use this model:
+
+- development: keep secrets in local `.env.local`
+- preview: add secrets in Vercel with target `preview`
+- production: add secrets in Vercel with target `production`
+
+If you are using CLI, create two entries for each secret (preview + production), not development.
+
 ## 4) Appwrite Console Settings
 
 - Add web platform for https://amarbhaiya.in
