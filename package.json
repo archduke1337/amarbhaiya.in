@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "start": "next start",
     "check:appwrite-events": "node scripts/validate-appwrite-events.js",
-    "setup:appwrite": "node scripts/setup-appwrite.js"
+    "setup:appwrite": "node scripts/setup-appwrite.js",
+    "setup:appwrite-schema": "node scripts/setup-appwrite-schema.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.0",
