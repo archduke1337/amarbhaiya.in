@@ -13,7 +13,11 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ROUTES } from "@/config/routes"
 
-export function LoginForm() {
+type LoginFormProps = {
+  redirectTo?: string
+}
+
+export function LoginForm({ redirectTo }: LoginFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -24,7 +28,7 @@ export function LoginForm() {
     setError(null)
 
     const formData = new FormData(e.currentTarget)
-    const result = await signIn(formData)
+    const result = await signIn(formData, redirectTo)
 
     if (result?.error) {
       setError(result.error)

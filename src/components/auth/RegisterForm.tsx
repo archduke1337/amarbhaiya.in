@@ -12,7 +12,11 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ROUTES } from "@/config/routes"
 
-export function RegisterForm() {
+type RegisterFormProps = {
+  redirectTo?: string
+}
+
+export function RegisterForm({ redirectTo }: RegisterFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -37,7 +41,7 @@ export function RegisterForm() {
       return
     }
 
-    const result = await signUp(formData)
+    const result = await signUp(formData, redirectTo)
     if (result?.error) {
       setError(result.error)
       setLoading(false)

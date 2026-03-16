@@ -2,7 +2,7 @@
  * @fileoverview GET /api/instructor/courses/[id]/students — List all students enrolled in a course.
  */
 import { NextRequest, NextResponse } from "next/server"
-import { getCurrentUser } from "@/lib/appwrite/auth"
+import { getLoggedInUser } from "@/lib/appwrite/server"
 import { enrollmentsDb, coursesDb, usersDb, lessonsDb, progressDb } from "@/lib/appwrite/database"
 import { ROLES } from "@/config/roles"
 
@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser()
+    const user = await getLoggedInUser()
     const { id: courseId } = await params
 
     if (!user || (!user.labels.includes(ROLES.INSTRUCTOR) && !user.labels.includes(ROLES.ADMIN))) {

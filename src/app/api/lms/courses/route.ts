@@ -6,6 +6,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Query } from "node-appwrite"
 import { coursesDb, categoriesDb } from "@/lib/appwrite/database"
+import { APPWRITE_CONFIG } from "@/config/appwrite"
+
+function getThumbnailUrl(fileId?: string) {
+  if (!fileId) return null
+
+  return `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.buckets.courseThumbnails}/files/${fileId}/view?project=${APPWRITE_CONFIG.projectId}`
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,7 +37,10 @@ export async function GET(req: NextRequest) {
     const result = await coursesDb.list({ queries, limit, offset })
 
     return NextResponse.json({
-      courses: result.documents,
+      courses: result.documents.map((doc: any) => ({
+        ...doc,
+        thumbnailUrl: getThumbnailUrl(doc.thumbnailFileId),
+      })),
       total: result.total,
     })
   } catch (error) {

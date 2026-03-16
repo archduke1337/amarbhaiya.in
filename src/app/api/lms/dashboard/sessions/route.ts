@@ -3,11 +3,11 @@
  */
 import { NextResponse } from "next/server"
 import { liveSessionsDb } from "@/lib/appwrite/database"
-import { getCurrentUser } from "@/lib/appwrite/auth"
+import { getLoggedInUser } from "@/lib/appwrite/server"
 
 export async function GET() {
   try {
-    const user = await getCurrentUser()
+    const user = await getLoggedInUser()
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

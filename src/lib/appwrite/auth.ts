@@ -3,14 +3,15 @@
  */
 "use server"
 
-import { ID, OAuthProvider } from "node-appwrite"
+import { ID } from "node-appwrite"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { createAdminClient, createSessionClient, createGuestClient } from "./server"
+import { createAdminClient, createSessionClient, createGuestClient, getLoggedInUser } from "./server"
 import { APPWRITE_CONFIG } from "@/config/appwrite"
 import type { Role } from "@/config/roles"
 
 const COOKIE_NAME = `a_session_${APPWRITE_CONFIG.projectId}`
+const FALLBACK_COOKIE_NAME = "a_session_console"
 
 const COOKIE_OPTIONS = {
   path: "/",
@@ -19,12 +20,20 @@ const COOKIE_OPTIONS = {
   secure: process.env.NODE_ENV === "production",
 }
 
-export async function signIn(formData: FormData) {
+function sanitizeRedirectPath(redirectTo?: string | null) {
+  if (!redirectTo) return "/app/dashboard"
+  if (!redirectTo.startsWith("/")) return "/app/dashboard"
+  if (redirectTo.startsWith("//")) return "/app/dashboard"
+  if (redirectTo.startsWith("/auth")) return "/app/dashboard"
+  return redirectTo
+}
+
+export async function signIn(formData: FormData, redirectTo?: string | null) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
   try {
-    const { account } = await createAdminClient()
+    const { account } = await createGuestClient()
     const session = await account.createEmailPasswordSession(email, password)
 
     ;(await cookies()).set(COOKIE_NAME, session.secret, {
@@ -36,16 +45,16 @@ export async function signIn(formData: FormData) {
     return { error: "Invalid credentials" }
   }
 
-  redirect("/app/dashboard")
+  redirect(sanitizeRedirectPath(redirectTo))
 }
 
-export async function signUp(formData: FormData) {
+export async function signUp(formData: FormData, redirectTo?: string | null) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
   const name = formData.get("name") as string
 
   try {
-    const { account } = await createAdminClient()
+    const { account } = await createGuestClient()
     await account.create(ID.unique(), email, password, name)
     const session = await account.createEmailPasswordSession(email, password)
 
@@ -58,7 +67,7 @@ export async function signUp(formData: FormData) {
     return { error: "Failed to create account" }
   }
 
-  redirect("/app/dashboard")
+  redirect(sanitizeRedirectPath(redirectTo))
 }
 
 export async function signOut() {
@@ -68,18 +77,15 @@ export async function signOut() {
   } catch {
     // Session may already be gone
   } finally {
-    ;(await cookies()).delete(COOKIE_NAME)
+    const cookieStore = await cookies()
+    cookieStore.delete(COOKIE_NAME)
+    cookieStore.delete(FALLBACK_COOKIE_NAME)
     redirect("/auth/login")
   }
 }
 
 export async function getCurrentUser() {
-  try {
-    const { account } = await createSessionClient()
-    return await account.get()
-  } catch {
-    return null
-  }
+  return getLoggedInUser()
 }
 
 /** Assign a role label to a user (admin-only) */

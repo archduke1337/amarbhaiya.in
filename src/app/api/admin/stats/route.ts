@@ -2,14 +2,14 @@
  * @fileoverview GET /api/admin/stats — Fetches platform-wide stats for admin dashboard.
  */
 import { NextResponse } from "next/server"
-import { getCurrentUser } from "@/lib/appwrite/auth"
+import { getLoggedInUser } from "@/lib/appwrite/server"
 import { usersDb, coursesDb, paymentsDb, moderationActionsDb } from "@/lib/appwrite/database"
 import { Query } from "node-appwrite"
 import { ROLES } from "@/config/roles"
 
 export async function GET() {
   try {
-    const user = await getCurrentUser()
+    const user = await getLoggedInUser()
     if (!user || !user.labels.includes(ROLES.ADMIN)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

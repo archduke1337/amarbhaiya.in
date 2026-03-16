@@ -4,11 +4,13 @@ import { Client, Account } from "node-appwrite"
 import { PANEL_ACCESS, getHighestRole } from "@/config/roles"
 
 const COOKIE_PREFIX = "a_session_"
+const FALLBACK_COOKIE = "a_session_console"
 
 function getSessionCookie(request: NextRequest): string | undefined {
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? ""
   const primary = request.cookies.get(`${COOKIE_PREFIX}${projectId}`)
-  return primary?.value
+  const fallback = request.cookies.get(FALLBACK_COOKIE)
+  return primary?.value ?? fallback?.value
 }
 
 export async function middleware(request: NextRequest) {

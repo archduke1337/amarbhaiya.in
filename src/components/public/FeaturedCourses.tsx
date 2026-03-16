@@ -52,9 +52,9 @@ export function FeaturedCourses() {
               {/* Image Banner */}
               <div className="relative h-64 overflow-hidden bg-muted">
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500 z-10" />
-                {course.thumbnailId ? (
+                {course.thumbnailUrl ? (
                    <img 
-                    src={`/api/appwrite/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_BUCKET_COURSES}/files/${course.thumbnailId}/view?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`} 
+                    src={course.thumbnailUrl}
                     alt={course.title}
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                   />
@@ -90,7 +90,7 @@ export function FeaturedCourses() {
                   </div>
 
                   <Button className="w-full text-base h-12 shadow-lg shadow-primary/20" asChild>
-                    <Link href={`/courses/${course.$id}`}>Explore Curriculum</Link>
+                    <Link href={`/courses/${course.slug ?? course.$id}`}>Explore Curriculum</Link>
                   </Button>
                 </div>
               </div>

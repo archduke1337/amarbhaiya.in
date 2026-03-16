@@ -2,7 +2,7 @@
  * @fileoverview GET /api/moderator/students/[id] — Fetch detailed user info for investigation.
  */
 import { NextRequest, NextResponse } from "next/server"
-import { getCurrentUser } from "@/lib/appwrite/auth"
+import { getLoggedInUser } from "@/lib/appwrite/server"
 import { usersDb, moderationActionsDb } from "@/lib/appwrite/database"
 import { ROLES } from "@/config/roles"
 
@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const investigator = await getCurrentUser()
+    const investigator = await getLoggedInUser()
     const { id: targetId } = await params
 
     if (!investigator || (!investigator.labels.includes(ROLES.MODERATOR) && !investigator.labels.includes(ROLES.ADMIN))) {

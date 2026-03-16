@@ -5,7 +5,6 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react"
 import { Models } from "appwrite"
-import { account } from "@/lib/appwrite/client"
 import { getHighestRole, type Role } from "@/config/roles"
 
 type AuthState = {
@@ -28,8 +27,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const currentUser = await account.get()
-      setUser(currentUser)
+      const response = await fetch("/api/auth/me", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        setUser(null)
+        return
+      }
+
+      const payload = await response.json() as { user?: Models.User<Models.Preferences> | null }
+      setUser(payload.user ?? null)
     } catch {
       setUser(null)
     } finally {
