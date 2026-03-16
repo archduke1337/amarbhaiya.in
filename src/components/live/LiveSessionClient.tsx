@@ -57,9 +57,7 @@ export function LiveSessionClient({ sessionId }: { sessionId: string }) {
         // 2. Initialize Chat with token provider
         _cClient = StreamChat.getInstance(apiKey)
         await _cClient.connectUser(userData, tokenProvider)
-        const chatChannel = _cClient.channel("messaging", sessionId, {
-          name: `Live Session: ${sessionId}`,
-        })
+        const chatChannel = _cClient.channel("messaging", sessionId)
         await chatChannel.watch()
         
         setChatClient(_cClient)
