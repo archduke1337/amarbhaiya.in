@@ -2,8 +2,10 @@
  * @fileoverview App-wide constants — names, pagination, rate limits.
  */
 
+import { getPublicAppUrl } from "@/lib/env"
+
 export const APP_NAME = "Amarnath Bhaiya"
-export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+export const APP_URL = getPublicAppUrl()
 
 export const PAGINATION_LIMIT = 25
 export const MAX_PAGINATION_LIMIT = 100
