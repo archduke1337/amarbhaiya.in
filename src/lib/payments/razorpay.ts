@@ -4,10 +4,19 @@
 import Razorpay from "razorpay"
 import { createHmac } from "crypto"
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID ?? "",
-  key_secret: process.env.RAZORPAY_KEY_SECRET ?? "",
-})
+function getRazorpayClient() {
+  const keyId = process.env.RAZORPAY_KEY_ID
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+
+  if (!keyId || !keySecret) {
+    throw new Error("Razorpay credentials not configured")
+  }
+
+  return new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  })
+}
 
 export type CreateOrderParams = {
   amount: number // in paise (₹100 = 10000)
@@ -18,9 +27,7 @@ export type CreateOrderParams = {
 
 /** Create a Razorpay order */
 export async function createRazorpayOrder(params: CreateOrderParams) {
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-    throw new Error("Razorpay credentials not configured")
-  }
+  const razorpay = getRazorpayClient()
 
   return razorpay.orders.create({
     amount: params.amount,
