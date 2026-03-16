@@ -86,8 +86,6 @@ const required = [
 ]
 
 const optionalButRecommended = [
-  "RAZORPAY_WEBHOOK_APP_SECRET",
-  "PHONEPE_WEBHOOK_APP_SECRET",
   "ADMIN_EMAILS",
   "NEXT_PUBLIC_EMAILJS_SERVICE_ID",
   "NEXT_PUBLIC_EMAILJS_TEMPLATE_ID",
@@ -117,6 +115,21 @@ function main() {
   if (webhookOwner !== "next" && webhookOwner !== "appwrite-function") {
     console.error("\n[check-prod-env] WEBHOOK_ENROLLMENT_OWNER must be either 'next' or 'appwrite-function'.\n")
     process.exit(1)
+  }
+
+  if (webhookOwner === "next") {
+    const missingWebhookSecrets = ["RAZORPAY_WEBHOOK_APP_SECRET", "PHONEPE_WEBHOOK_APP_SECRET"].filter(
+      (key) => !env[key] || String(env[key]).trim() === ""
+    )
+
+    if (missingWebhookSecrets.length > 0) {
+      console.error("\n[check-prod-env] Missing required webhook app secrets for WEBHOOK_ENROLLMENT_OWNER=next:\n")
+      for (const key of missingWebhookSecrets) {
+        console.error(`- ${key}`)
+      }
+      console.error("")
+      process.exit(1)
+    }
   }
 
   const missingRecommended = optionalButRecommended.filter((key) => !env[key] || String(env[key]).trim() === "")

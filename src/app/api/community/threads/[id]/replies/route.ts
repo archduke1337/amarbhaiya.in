@@ -42,9 +42,19 @@ export async function POST(
 
     const { id: threadId } = await params
     const { content } = await req.json()
+    const normalizedContent = typeof content === "string" ? content.trim() : ""
 
-    if (!content) {
+    if (!normalizedContent) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 })
+    }
+
+    const thread = await forumThreadsDb.get(threadId)
+    if ((thread as any).isLocked) {
+      return NextResponse.json({ error: "Thread is locked" }, { status: 403 })
+    }
+
+    if ((thread as any).isDeleted) {
+      return NextResponse.json({ error: "Thread is deleted" }, { status: 404 })
     }
 
     const isInstructor = user.labels.includes(ROLES.INSTRUCTOR) || user.labels.includes(ROLES.ADMIN)
@@ -53,8 +63,13 @@ export async function POST(
       threadId,
       userId: user.$id,
       authorName: user.name,
-      content,
+      content: normalizedContent,
       isInstructor,
+    })
+
+    await forumThreadsDb.update(threadId, {
+      replyCount: ((thread as any).replyCount ?? 0) + 1,
+      lastReplyAt: new Date().toISOString(),
     })
 
     return NextResponse.json({ success: true, reply })

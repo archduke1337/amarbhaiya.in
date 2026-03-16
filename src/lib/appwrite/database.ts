@@ -251,6 +251,13 @@ export const courseReviewsDb = {
   create: (id: string, data: Record<string, unknown>) => createDocument(collections.courseReviews, id, data),
   update: (id: string, data: Record<string, unknown>) => updateDocument(collections.courseReviews, id, data),
   delete: (id: string) => deleteDocument(collections.courseReviews, id),
+  getByUserAndCourse: async (userId: string, courseId: string) => {
+    const result = await listDocuments(collections.courseReviews, {
+      queries: [Query.equal("userId", userId), Query.equal("courseId", courseId)],
+      limit: 1,
+    })
+    return result.documents[0] ?? null
+  },
   listByCourse: (courseId: string) =>
     listDocuments(collections.courseReviews, { queries: [Query.equal("courseId", courseId), Query.orderDesc("$createdAt")] }),
 }

@@ -3,7 +3,7 @@
  */
 import { NextRequest, NextResponse } from "next/server"
 import { getLoggedInUser } from "@/lib/appwrite/server"
-import { usersDb, moderationActionsDb } from "@/lib/appwrite/database"
+import { usersDb, moderationActionsDb, auditLogsDb } from "@/lib/appwrite/database"
 import { ROLES } from "@/config/roles"
 
 export async function GET(
@@ -14,14 +14,27 @@ export async function GET(
     const investigator = await getLoggedInUser()
     const { id: targetId } = await params
 
-    if (!investigator || (!investigator.labels.includes(ROLES.MODERATOR) && !investigator.labels.includes(ROLES.ADMIN))) {
+    if (!investigator) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const isModerator = investigator.labels.includes(ROLES.MODERATOR) || investigator.labels.includes(ROLES.ADMIN)
+    if (!isModerator) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const [user, actions] = await Promise.all([
       usersDb.get(targetId),
       moderationActionsDb.listByTarget(targetId)
     ])
+
+    await auditLogsDb.create((globalThis as any).crypto?.randomUUID?.() ?? `${Date.now()}-${investigator.$id}`, {
+      userId: investigator.$id,
+      action: "moderator.student.lookup",
+      targetType: "user",
+      targetId,
+      metadata: JSON.stringify({ route: "/api/moderator/students/[id]" }),
+    })
 
     return NextResponse.json({
       student: {

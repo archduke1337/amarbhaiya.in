@@ -10,9 +10,15 @@ import { createEnrollment } from "@/lib/services/enrollment"
 
 const ENROLLMENT_OWNER = (process.env.WEBHOOK_ENROLLMENT_OWNER ?? "next").toLowerCase()
 const APP_SECRET = process.env.RAZORPAY_WEBHOOK_APP_SECRET
+const REQUIRE_APP_SECRET = process.env.NODE_ENV === "production" && ENROLLMENT_OWNER === "next"
 
 export async function POST(req: NextRequest) {
   try {
+    if (REQUIRE_APP_SECRET && !APP_SECRET) {
+      console.error("[Razorpay Webhook] Missing RAZORPAY_WEBHOOK_APP_SECRET in production")
+      return NextResponse.json({ error: "Webhook misconfigured" }, { status: 500 })
+    }
+
     const body = await req.text()
     const signature = req.headers.get("x-razorpay-signature")
     const appToken = req.headers.get("x-app-webhook-token")
@@ -21,7 +27,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing signature" }, { status: 400 })
     }
 
-    if (APP_SECRET && appToken !== APP_SECRET) {
+    if ((APP_SECRET || REQUIRE_APP_SECRET) && appToken !== APP_SECRET) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

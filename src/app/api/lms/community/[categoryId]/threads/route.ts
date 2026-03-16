@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { ID } from "node-appwrite"
-import { forumThreadsDb } from "@/lib/appwrite/database"
+import { forumCategoriesDb, forumThreadsDb } from "@/lib/appwrite/database"
 import { getLoggedInUser } from "@/lib/appwrite/server"
 
 export async function GET(
@@ -36,11 +36,23 @@ export async function POST(
     const { categoryId } = await params
     const body = await req.json()
 
+    const title = typeof body.title === "string" ? body.title.trim() : ""
+    const content = typeof body.content === "string" ? body.content.trim() : ""
+
+    if (!title || !content) {
+      return NextResponse.json({ error: "title and content are required" }, { status: 400 })
+    }
+
+    const category = await forumCategoriesDb.get(categoryId)
+    if (!(category as any).isActive) {
+      return NextResponse.json({ error: "Category is inactive" }, { status: 403 })
+    }
+
     const thread = await forumThreadsDb.create(ID.unique(), {
       categoryId,
       userId: user.$id,
-      title: body.title,
-      content: body.content,
+      title,
+      content,
       isPinned: false,
       isLocked: false,
       isFlagged: false,

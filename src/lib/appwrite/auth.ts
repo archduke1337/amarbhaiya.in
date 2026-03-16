@@ -8,6 +8,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createAdminClient, createSessionClient, createGuestClient, getLoggedInUser } from "./server"
 import { APPWRITE_CONFIG } from "@/config/appwrite"
+import { getPublicAppUrl } from "@/lib/env"
 import type { Role } from "@/config/roles"
 
 const COOKIE_NAME = `a_session_${APPWRITE_CONFIG.projectId}`
@@ -115,4 +116,50 @@ export async function createOAuthSession(userId: string, secret: string) {
   } catch {
     return { error: "Failed to create session" }
   }
+}
+
+/** Request password recovery email */
+export async function requestPasswordRecovery(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim()
+  if (!email) return { error: "Email is required" }
+
+  try {
+    const { account } = await createGuestClient()
+    const redirectUrl = `${getPublicAppUrl()}/auth/reset-password`
+    await account.createRecovery(email, redirectUrl)
+    return { success: true }
+  } catch (err) {
+    console.error("requestPasswordRecovery error:", err)
+    return { error: "Could not send reset link" }
+  }
+}
+
+/** Complete password recovery with userId + secret from email link */
+export async function completePasswordRecovery(formData: FormData) {
+  const userId = String(formData.get("userId") ?? "").trim()
+  const secret = String(formData.get("secret") ?? "").trim()
+  const password = String(formData.get("password") ?? "")
+  const confirmPassword = String(formData.get("confirmPassword") ?? "")
+
+  if (!userId || !secret) {
+    return { error: "Invalid or expired reset link" }
+  }
+
+  if (!password || password.length < 8) {
+    return { error: "Password must be at least 8 characters" }
+  }
+
+  if (password !== confirmPassword) {
+    return { error: "Passwords do not match" }
+  }
+
+  try {
+    const { account } = await createGuestClient()
+    await account.updateRecovery(userId, secret, password)
+  } catch (err) {
+    console.error("completePasswordRecovery error:", err)
+    return { error: "Failed to reset password" }
+  }
+
+  redirect("/auth/login?reset=success")
 }

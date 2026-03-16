@@ -2,7 +2,7 @@
  * @fileoverview GET/POST /api/lms/courses/[id]/reviews — handle student star ratings and feedback.
  */
 import { NextResponse, NextRequest } from "next/server"
-import { courseReviewsDb } from "@/lib/appwrite/database"
+import { courseReviewsDb, enrollmentsDb } from "@/lib/appwrite/database"
 import { getLoggedInUser } from "@/lib/appwrite/server"
 import { ID } from "node-appwrite"
 
@@ -42,17 +42,36 @@ export async function POST(
 
     const { id: courseId } = await params
     const { rating, comment } = await req.json()
+    const numericRating = Number(rating)
+    const normalizedComment = typeof comment === "string" ? comment.trim() : ""
 
-    if (!rating || rating < 1 || rating > 5) {
+    if (!numericRating || numericRating < 1 || numericRating > 5) {
       return NextResponse.json({ error: "Valid rating (1-5) is required" }, { status: 400 })
+    }
+
+    const enrollment = await enrollmentsDb.getByUserAndCourse(user.$id, courseId)
+    if (!enrollment) {
+      return NextResponse.json({ error: "Only enrolled students can review this course" }, { status: 403 })
+    }
+
+    const existing = await courseReviewsDb.getByUserAndCourse(user.$id, courseId)
+
+    if (existing) {
+      const updated = await courseReviewsDb.update((existing as any).$id, {
+        rating: Math.round(numericRating),
+        comment: normalizedComment,
+        userName: user.name,
+        status: "approved",
+      })
+      return NextResponse.json(updated)
     }
 
     const review = await courseReviewsDb.create(ID.unique(), {
       userId: user.$id,
       userName: user.name,
       courseId,
-      rating: parseInt(rating),
-      comment: comment || "",
+      rating: Math.round(numericRating),
+      comment: normalizedComment,
       status: "approved"
     })
 
