@@ -1,3 +1,5 @@
+"use client"
+
 import { useCourse } from "@/hooks/useCourse"
 import { useProgress } from "@/hooks/useProgress"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
