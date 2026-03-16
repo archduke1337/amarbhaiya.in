@@ -13,7 +13,26 @@ export default function AboutPage() {
         <p className="text-muted-foreground text-lg">
           A mentor who builds systems that guide students from confusion → clarity → outcomes.
         </p>
-        {/* TODO: Add full about content */}
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <section className="rounded-lg border p-5">
+            <h2 className="text-lg font-semibold">Mission</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Build a predictable path for students to move from uncertainty to real outcomes.
+            </p>
+          </section>
+          <section className="rounded-lg border p-5">
+            <h2 className="text-lg font-semibold">Approach</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Systems-first mentorship with clear milestones, accountability, and execution support.
+            </p>
+          </section>
+          <section className="rounded-lg border p-5">
+            <h2 className="text-lg font-semibold">Outcome</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Better decisions, stronger portfolios, and measurable career progress.
+            </p>
+          </section>
+        </div>
       </main>
       <Footer />
     </>

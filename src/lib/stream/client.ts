@@ -3,8 +3,6 @@
  * Uses @stream-io/video-react-sdk and stream-chat-react.
  */
 
-// TODO: Install packages: @stream-io/video-react-sdk stream-chat stream-chat-react
-
 /**
  * Initialize Stream Video client (call in a React component/provider)
  *
