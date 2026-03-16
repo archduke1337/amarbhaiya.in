@@ -3,6 +3,37 @@
  * @fileoverview Production env validator for Vercel deployments.
  */
 
+const fs = require("fs")
+const path = require("path")
+
+function parseEnv(content) {
+  const env = {}
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith("#")) continue
+    const idx = trimmed.indexOf("=")
+    if (idx <= 0) continue
+    const key = trimmed.slice(0, idx).trim()
+    env[key] = trimmed.slice(idx + 1).trim().replace(/^['"]|['"]$/g, "")
+  }
+  return env
+}
+
+function loadEnvFromFiles() {
+  const root = process.cwd()
+  const files = [path.join(root, ".env"), path.join(root, ".env.local")]
+  const merged = {}
+
+  for (const file of files) {
+    if (fs.existsSync(file)) {
+      Object.assign(merged, parseEnv(fs.readFileSync(file, "utf8")))
+    }
+  }
+
+  Object.assign(merged, process.env)
+  return merged
+}
+
 const required = [
   "NEXT_PUBLIC_APP_URL",
   "NEXT_PUBLIC_APPWRITE_ENDPOINT",
@@ -64,7 +95,8 @@ const optionalButRecommended = [
 ]
 
 function main() {
-  const missing = required.filter((key) => !process.env[key] || String(process.env[key]).trim() === "")
+  const env = loadEnvFromFiles()
+  const missing = required.filter((key) => !env[key] || String(env[key]).trim() === "")
 
   if (missing.length > 0) {
     console.error("\n[check-prod-env] Missing required environment variables:\n")
@@ -75,19 +107,19 @@ function main() {
     process.exit(1)
   }
 
-  const url = process.env.NEXT_PUBLIC_APP_URL || ""
+  const url = env.NEXT_PUBLIC_APP_URL || ""
   if (!/^https:\/\//.test(url)) {
     console.error("\n[check-prod-env] NEXT_PUBLIC_APP_URL must start with https:// in production.\n")
     process.exit(1)
   }
 
-  const webhookOwner = process.env.WEBHOOK_ENROLLMENT_OWNER
+  const webhookOwner = env.WEBHOOK_ENROLLMENT_OWNER
   if (webhookOwner !== "next" && webhookOwner !== "appwrite-function") {
     console.error("\n[check-prod-env] WEBHOOK_ENROLLMENT_OWNER must be either 'next' or 'appwrite-function'.\n")
     process.exit(1)
   }
 
-  const missingRecommended = optionalButRecommended.filter((key) => !process.env[key] || String(process.env[key]).trim() === "")
+  const missingRecommended = optionalButRecommended.filter((key) => !env[key] || String(env[key]).trim() === "")
   if (missingRecommended.length > 0) {
     console.warn("\n[check-prod-env] Optional but recommended variables are missing:\n")
     for (const key of missingRecommended) {
