@@ -1,12 +1,14 @@
-/**
- * @fileoverview Community forums — all categories listing.
- */
+import { ForumCategoryList } from "@/components/community/ForumCategoryList"
+
 export default function CommunityPage() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Community</h1>
-      <p className="text-muted-foreground mb-8">Join discussions with fellow learners.</p>
-      {/* TODO: ForumCategoryList */}
+    <div className="max-w-6xl mx-auto py-8">
+      <div className="mb-12">
+        <h1 className="text-4xl font-black tracking-tight mb-3">Community Forums</h1>
+        <p className="text-xl text-muted-foreground">Collaborate, share knowledge, and grow with 4,000+ fellow students.</p>
+      </div>
+      
+      <ForumCategoryList />
     </div>
   )
 }

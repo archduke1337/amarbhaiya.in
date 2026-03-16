@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview EmptyState - shared component stub.
  */
 "use client"

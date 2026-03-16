@@ -1,21 +1,23 @@
 /**
  * @fileoverview Appwrite function: Create Enrollment.
  * Triggered when a payment status changes to "completed".
- * Creates enrollment record and sends confirmation notification.
  */
-import { Client, Databases, Query } from "node-appwrite"
+import { Client, Databases, Query, ID } from "node-appwrite"
 
 export default async ({ req, res, log, error }: any) => {
   const client = new Client()
-    .setEndpoint(process.env.APPWRITE_ENDPOINT!)
+    .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT!) // Use dynamic API endpoint
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
-    .setKey(process.env.APPWRITE_API_KEY!)
+    .setKey(req.headers['x-appwrite-key']!) // Use dynamic runtime API key
 
   const databases = new Databases(client)
   const DB = process.env.APPWRITE_DATABASE_ID!
+  const enrollmentsCol = process.env.APPWRITE_COLLECTION_ENROLLMENTS!
+  const notificationsCol = process.env.APPWRITE_COLLECTION_NOTIFICATIONS!
 
   try {
-    const payment = JSON.parse(req.body)
+    // req.bodyJson is the modern way to access parsed payload
+    const payment = req.bodyJson
     log(`Processing enrollment for payment: ${payment.$id}`)
 
     if (payment.status !== "completed") {
@@ -23,7 +25,7 @@ export default async ({ req, res, log, error }: any) => {
     }
 
     // Check if enrollment already exists
-    const existing = await databases.listDocuments(DB, process.env.COLLECTION_ENROLLMENTS!, [
+    const existing = await databases.listDocuments(DB, enrollmentsCol, [
       Query.equal("userId", payment.userId),
       Query.equal("courseId", payment.courseId),
     ])
@@ -33,7 +35,7 @@ export default async ({ req, res, log, error }: any) => {
     }
 
     // Create enrollment
-    await databases.createDocument(DB, process.env.COLLECTION_ENROLLMENTS!, "unique()", {
+    await databases.createDocument(DB, enrollmentsCol, ID.unique(), {
       userId: payment.userId,
       courseId: payment.courseId,
       paymentId: payment.$id,
@@ -41,10 +43,24 @@ export default async ({ req, res, log, error }: any) => {
       enrolledAt: new Date().toISOString(),
     })
 
+    // Send notification to user
+    try {
+      await databases.createDocument(DB, notificationsCol, ID.unique(), {
+        userId: payment.userId,
+        type: "enrollment",
+        title: "Enrollment Confirmed!",
+        message: `You have been successfully enrolled. Start learning now!`,
+        linkUrl: `/app/courses/${payment.courseId}`,
+        isRead: false,
+      })
+    } catch (notifErr) {
+      log(`Non-critical: notification creation failed: ${notifErr}`)
+    }
+
     log(`Enrollment created for user ${payment.userId} in course ${payment.courseId}`)
     return res.json({ success: true })
-  } catch (err) {
-    error(`Create enrollment failed: ${err}`)
-    return res.json({ success: false }, 500)
+  } catch (err: any) {
+    error(`Create enrollment failed: ${err.message}`)
+    return res.json({ success: false, error: err.message }, 500)
   }
 }

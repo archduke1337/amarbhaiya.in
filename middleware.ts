@@ -1,86 +1,73 @@
-/**
- * @fileoverview RBAC middleware — protects /app, /instructor, /moderator, /admin routes.
- * Uses Appwrite session cookie + user labels for role-based access control.
- */
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { Client, Account } from "node-appwrite"
+import { PANEL_ACCESS, getHighestRole } from "@/config/roles"
 
 const COOKIE_PREFIX = "a_session_"
-const FALLBACK_COOKIE = "a_session_console"
-
-/** Role → allowed route prefixes */
-const ROLE_ROUTES: Record<string, string[]> = {
-  admin: ["/app", "/instructor", "/moderator", "/admin"],
-  instructor: ["/app", "/instructor"],
-  moderator: ["/app", "/moderator"],
-  student: ["/app"],
-}
-
-/** Route prefixes that require authentication + authorization */
-const PROTECTED_PREFIXES = ["/app", "/instructor", "/moderator", "/admin"]
 
 function getSessionCookie(request: NextRequest): string | undefined {
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? ""
   const primary = request.cookies.get(`${COOKIE_PREFIX}${projectId}`)
-  const fallback = request.cookies.get(FALLBACK_COOKIE)
-  return primary?.value ?? fallback?.value
-}
-
-function getHighestRole(labels: string[]): string {
-  const priority = ["admin", "moderator", "instructor", "student"]
-  for (const role of priority) {
-    if (labels.includes(role)) return role
-  }
-  return "student"
+  return primary?.value
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))
-  if (!isProtected) return NextResponse.next()
-
-  // 1. Check session cookie
   const session = getSessionCookie(request)
-  if (!session) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/auth/login"
+
+  const isAuthPage = pathname.startsWith("/auth")
+  const isProtectedPage = Object.values(PANEL_ACCESS).flat().some(p => pathname.startsWith(p))
+
+  if (!isAuthPage && !isProtectedPage) return NextResponse.next()
+
+  // Guest users on Auth pages are always allowed
+  if (isAuthPage && !session) return NextResponse.next()
+
+  // Protected pages require session
+  if (isProtectedPage && !session) {
+    const url = new URL("/auth/login", request.url)
     url.searchParams.set("redirect", pathname)
     return NextResponse.redirect(url)
   }
 
+  // We have a session AND (isAuthPage OR isProtectedPage)
   try {
-    // 2. Validate session with Appwrite
     const client = new Client()
       .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
       .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!)
-    client.setSession(session)
-
+    
+    if (session) client.setSession(session)
     const account = new Account(client)
     const user = await account.get()
 
-    // 3. Check role-based access
+    // 1. If on login page but already logged in -> redirect to dashboard
+    if (isAuthPage) {
+      return NextResponse.redirect(new URL("/app/dashboard", request.url))
+    }
+
+    // 2. Role validation for protected pages
     const labels = user.labels ?? []
     const role = getHighestRole(labels)
-    const allowedPrefixes = ROLE_ROUTES[role] ?? ROLE_ROUTES.student
+    const allowedPrefixes = PANEL_ACCESS[role] ?? PANEL_ACCESS.student
 
     const hasAccess = allowedPrefixes.some((p) => pathname.startsWith(p))
     if (!hasAccess) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/app/dashboard"
-      return NextResponse.redirect(url)
+      return NextResponse.redirect(new URL("/app/dashboard", request.url))
     }
 
     return NextResponse.next()
-  } catch {
-    const url = request.nextUrl.clone()
-    url.pathname = "/auth/login"
-    url.searchParams.set("redirect", pathname)
+  } catch (error) {
+    // If session is invalid or expired
+    if (isAuthPage) return NextResponse.next()
+    
+    const url = new URL("/auth/login", request.url)
+    if (pathname !== "/app/dashboard") {
+       url.searchParams.set("redirect", pathname)
+    }
     return NextResponse.redirect(url)
   }
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/instructor/:path*", "/moderator/:path*", "/admin/:path*"],
+  matcher: ["/app/:path*", "/instructor/:path*", "/moderator/:path*", "/admin/:path*", "/auth/:path*"],
 }

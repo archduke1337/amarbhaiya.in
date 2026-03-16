@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview LoadingSpinner - shared component stub.
  */
 "use client"

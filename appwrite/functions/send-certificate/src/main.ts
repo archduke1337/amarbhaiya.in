@@ -1,33 +1,65 @@
 /**
  * @fileoverview Appwrite function: Send Certificate.
  * Triggered when a certificate document is created.
- * Generates PDF certificate and sends email notification.
  */
-import { Client, Databases, Storage, Messaging } from "node-appwrite"
+import { Client, Databases, Users, ID } from "node-appwrite"
 
 export default async ({ req, res, log, error }: any) => {
   const client = new Client()
-    .setEndpoint(process.env.APPWRITE_ENDPOINT!)
+    .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT!) // Use dynamic API endpoint
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID!)
-    .setKey(process.env.APPWRITE_API_KEY!)
+    .setKey(req.headers['x-appwrite-key']!) // Use dynamic runtime API key
 
   const databases = new Databases(client)
-  const storage = new Storage(client)
-  const messaging = new Messaging(client)
+  const users = new Users(client)
+  const DB = process.env.APPWRITE_DATABASE_ID!
+  const notificationsCol = process.env.APPWRITE_COLLECTION_NOTIFICATIONS!
+  const coursesCol = process.env.APPWRITE_COLLECTION_COURSES!
 
   try {
-    const certificate = JSON.parse(req.body)
+    const certificate = req.bodyJson
     log(`Processing certificate: ${certificate.$id}`)
 
-    // TODO: Generate PDF certificate using a template
-    // TODO: Upload PDF to storage bucket
-    // TODO: Update certificate document with file URL
-    // TODO: Send email notification to user
+    // Fetch user and course details
+    const [user, course] = await Promise.all([
+      users.get(certificate.userId),
+      databases.getDocument(DB, coursesCol, certificate.courseId),
+    ])
 
-    log(`Certificate processed for user ${certificate.userId}`)
-    return res.json({ success: true })
-  } catch (err) {
-    error(`Send certificate failed: ${err}`)
-    return res.json({ success: false }, 500)
+    const courseName = (course.title as string) ?? "your course"
+    const userName = user.name ?? "Student"
+
+    log(`Certificate for ${userName} — course: ${courseName}`)
+
+    // Generate a download URL for the certificate file
+    const endpoint = process.env.APPWRITE_FUNCTION_API_ENDPOINT!
+    const projectId = process.env.APPWRITE_FUNCTION_PROJECT_ID!
+    const bucketId = process.env.APPWRITE_BUCKET_CERTIFICATES!
+    const fileId = certificate.certificateFileId
+
+    const certificateUrl = fileId
+      ? `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`
+      : null
+
+    // Send notification to user
+    await databases.createDocument(DB, notificationsCol, ID.unique(), {
+      userId: certificate.userId,
+      type: "certificate",
+      title: "Certificate Earned!",
+      message: `Congratulations, ${userName}! You've earned your certificate for "${courseName}".`,
+      linkUrl: `/app/certificates`,
+      isRead: false,
+    })
+
+    log(`Certificate notification sent to user ${certificate.userId}`)
+    return res.json({
+      success: true,
+      certificateUrl,
+      userId: certificate.userId,
+      courseName,
+    })
+  } catch (err: any) {
+    error(`Send certificate failed: ${err.message}`)
+    return res.json({ success: false, error: err.message }, 500)
   }
 }

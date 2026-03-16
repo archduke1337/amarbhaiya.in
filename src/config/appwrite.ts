@@ -36,6 +36,7 @@ export const APPWRITE_CONFIG = {
     moderationActions: process.env.APPWRITE_COLLECTION_MODERATION_ACTIONS!,
     auditLogs: process.env.APPWRITE_COLLECTION_AUDIT_LOGS!,
     notifications: process.env.APPWRITE_COLLECTION_NOTIFICATIONS!,
+    courseReviews: process.env.APPWRITE_COLLECTION_COURSE_REVIEWS!,
   },
 
   /** 6 Storage Buckets */

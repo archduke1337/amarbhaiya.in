@@ -1,13 +1,41 @@
-﻿/**
- * @fileoverview StatsSection component stub.
- */
+"use client"
+import { usePublicStats } from "@/hooks/usePublicStats"
+import { Loader2 } from "lucide-react"
+
 export function StatsSection() {
+  const { stats, loading } = usePublicStats()
+
   return (
-    <section className="py-20">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-6">StatsSection</h2>
-        {/* TODO: Implement StatsSection */}
+    <section className="py-20 bg-primary/5 transition-opacity duration-500">
+      <div className="container px-4 md:px-6 mx-auto">
+        <div className={`grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-border/50 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+          <div className="flex flex-col">
+            <span className="text-4xl md:text-5xl font-black text-primary mb-2">
+              {loading ? "..." : `${(stats?.membersCount / 1000).toFixed(0)}k+`}
+            </span>
+            <span className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Engineers Mentored</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-4xl md:text-5xl font-black text-blue-500 mb-2">
+              {loading ? "..." : `${stats?.successRate}%`}
+            </span>
+            <span className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Interview Success</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-4xl md:text-5xl font-black text-violet-500 mb-2">
+              {loading ? "..." : stats?.averageRating}
+            </span>
+            <span className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Average Rating</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-4xl md:text-5xl font-black text-emerald-500 mb-2">
+              {loading ? "..." : stats?.coursesCount}
+            </span>
+            <span className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Active Courses</span>
+          </div>
+        </div>
       </div>
     </section>
   )
 }
+

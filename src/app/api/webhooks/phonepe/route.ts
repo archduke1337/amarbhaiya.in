@@ -4,18 +4,27 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { ID } from "node-appwrite"
 import { verifyPhonePeCallback } from "@/lib/payments/phonepe"
-import { paymentsDb, enrollmentsDb } from "@/lib/appwrite/database"
+import { paymentsDb } from "@/lib/appwrite/database"
+import { createEnrollment } from "@/lib/services/enrollment"
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { merchantTransactionId, transactionId, code } = body
+    const rawBody = await req.text()
+    const xVerifyHeader = req.headers.get("x-verify")
 
-    const isValid = await verifyPhonePeCallback(body)
+    if (!xVerifyHeader) {
+      return NextResponse.json({ error: "Missing X-VERIFY header" }, { status: 400 })
+    }
+
+    const isValid = verifyPhonePeCallback(rawBody, xVerifyHeader)
     if (!isValid) {
       return NextResponse.json({ error: "Invalid callback" }, { status: 401 })
     }
+
+    const body = JSON.parse(rawBody)
+    const { merchantTransactionId, transactionId, code } = body
 
     if (code === "PAYMENT_SUCCESS") {
       // Update payment record
@@ -25,22 +34,14 @@ export async function POST(req: NextRequest) {
         method: "phonepe",
       })
 
-      // Fetch payment to get userId and courseId
+      // Create enrollment
       const paymentDoc = await paymentsDb.get(merchantTransactionId)
       if (paymentDoc?.userId && paymentDoc?.courseId) {
-        const existing = await enrollmentsDb.getByUserAndCourse(
-          paymentDoc.userId,
-          paymentDoc.courseId
-        )
-        if (!existing) {
-          await enrollmentsDb.create({
-            userId: paymentDoc.userId,
-            courseId: paymentDoc.courseId,
-            paymentId: merchantTransactionId,
-            status: "active",
-            enrolledAt: new Date().toISOString(),
-          })
-        }
+        await createEnrollment({
+          userId: paymentDoc.userId as string,
+          courseId: paymentDoc.courseId as string,
+          paymentId: merchantTransactionId,
+        })
       }
     } else {
       await paymentsDb.update(merchantTransactionId, { status: "failed" })

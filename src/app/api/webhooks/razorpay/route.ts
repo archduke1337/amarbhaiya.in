@@ -4,8 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { ID } from "node-appwrite"
 import { verifyRazorpayWebhook } from "@/lib/payments/razorpay"
-import { paymentsDb, enrollmentsDb } from "@/lib/appwrite/database"
+import { paymentsDb } from "@/lib/appwrite/database"
+import { createEnrollment } from "@/lib/services/enrollment"
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,21 +37,13 @@ export async function POST(req: NextRequest) {
         method,
       })
 
-      // Create enrollment if not exists
+      // Create enrollment
       if (notes.userId && notes.courseId) {
-        const existing = await enrollmentsDb.getByUserAndCourse(
-          notes.userId,
-          notes.courseId
-        )
-        if (!existing) {
-          await enrollmentsDb.create({
-            userId: notes.userId,
-            courseId: notes.courseId,
-            paymentId: notes.paymentDocId,
-            status: "active",
-            enrolledAt: new Date().toISOString(),
-          })
-        }
+        await createEnrollment({
+          userId: notes.userId,
+          courseId: notes.courseId,
+          paymentId: notes.paymentDocId,
+        })
       }
     }
 

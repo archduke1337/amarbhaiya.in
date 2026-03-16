@@ -1,9 +1,8 @@
 /**
  * @fileoverview Server-side Stream token generation.
- * Generates user tokens for Stream Video & Chat using the API secret.
+ * Generates user tokens for Stream Video & Chat using the Stream Node SDK.
  */
-
-// TODO: Install package: @stream-io/node-sdk
+import { StreamClient } from "@stream-io/node-sdk"
 
 /**
  * Generate a Stream user token (server-side only).
@@ -17,17 +16,15 @@ export async function generateStreamToken(userId: string): Promise<string> {
     throw new Error("Stream credentials not configured")
   }
 
-  // Using manual JWT generation until @stream-io/node-sdk is installed
-  const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url")
-  const now = Math.floor(Date.now() / 1000)
-  const payload = Buffer.from(
-    JSON.stringify({ user_id: userId, iat: now, exp: now + 3600 })
-  ).toString("base64url")
+  // Initialize the Stream Server client
+  const serverClient = new StreamClient(apiKey, apiSecret)
 
-  const { createHmac } = await import("crypto")
-  const signature = createHmac("sha256", apiSecret)
-    .update(`${header}.${payload}`)
-    .digest("base64url")
+  // Generate a token with a 1-hour validity period (3600 seconds)
+  // The SDK automatically handles claims (iat, user_id) and signing.
+  const token = serverClient.generateUserToken({ 
+    user_id: userId, 
+    validity_in_seconds: 3600 
+  })
 
-  return `${header}.${payload}.${signature}`
+  return token
 }

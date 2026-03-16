@@ -1,11 +1,8 @@
 /**
- * @fileoverview Login page.
+ * @fileoverview Login page — renders the LoginForm component.
  */
+import { LoginForm } from "@/components/auth/LoginForm"
+
 export default function LoginPage() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6 text-center">Sign In</h1>
-      {/* TODO: LoginForm component */}
-    </div>
-  )
+  return <LoginForm />
 }

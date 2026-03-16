@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const token = generateStreamToken(user.$id)
+    const token = await generateStreamToken(user.$id)
 
     return NextResponse.json({ token, userId: user.$id })
   } catch (error) {

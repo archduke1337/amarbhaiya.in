@@ -48,7 +48,28 @@ export async function createAdminClient() {
   }
 }
 
-/** Get current logged-in user or null */
+/** Get databases instance with either session or admin client */
+export async function getDatabases(useAdmin = false) {
+  if (useAdmin) {
+    const { databases } = await createAdminClient()
+    return databases
+  }
+  const { databases } = await createSessionClient()
+  return databases
+}
+
+/** Create a guest client — for login/signup */
+export async function createGuestClient() {
+  const client = new Client()
+    .setEndpoint(APPWRITE_CONFIG.endpoint)
+    .setProject(APPWRITE_CONFIG.projectId)
+
+  return {
+    get account() { return new Account(client) },
+  }
+}
+
+/** Get logged-in user or null */
 export async function getLoggedInUser() {
   try {
     const { account } = await createSessionClient()

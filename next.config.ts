@@ -12,9 +12,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    turbo: {},
-  },
 }
 
 export default nextConfig

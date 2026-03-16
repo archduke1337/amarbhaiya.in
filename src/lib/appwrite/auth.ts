@@ -6,7 +6,7 @@
 import { ID, OAuthProvider } from "node-appwrite"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { createAdminClient, createSessionClient } from "./server"
+import { createAdminClient, createSessionClient, createGuestClient } from "./server"
 import { APPWRITE_CONFIG } from "@/config/appwrite"
 import type { Role } from "@/config/roles"
 
@@ -27,8 +27,12 @@ export async function signIn(formData: FormData) {
     const { account } = await createAdminClient()
     const session = await account.createEmailPasswordSession(email, password)
 
-    ;(await cookies()).set(COOKIE_NAME, session.secret, COOKIE_OPTIONS)
-  } catch {
+    ;(await cookies()).set(COOKIE_NAME, session.secret, {
+      ...COOKIE_OPTIONS,
+      expires: new Date(session.expire),
+    })
+  } catch (err) {
+    console.error("SignIn error:", err)
     return { error: "Invalid credentials" }
   }
 
@@ -45,8 +49,12 @@ export async function signUp(formData: FormData) {
     await account.create(ID.unique(), email, password, name)
     const session = await account.createEmailPasswordSession(email, password)
 
-    ;(await cookies()).set(COOKIE_NAME, session.secret, COOKIE_OPTIONS)
-  } catch {
+    ;(await cookies()).set(COOKIE_NAME, session.secret, {
+      ...COOKIE_OPTIONS,
+      expires: new Date(session.expire),
+    })
+  } catch (err) {
+    console.error("SignUp error:", err)
     return { error: "Failed to create account" }
   }
 

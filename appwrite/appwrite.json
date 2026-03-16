@@ -45,6 +45,17 @@
       "events": ["databases.*.collections.moderation-actions.documents.*.create"],
       "schedule": "",
       "timeout": 30
+    },
+    {
+      "$id": "cleanup-moderation",
+      "name": "Moderation Cleanup",
+      "runtime": "node-18.0",
+      "entrypoint": "src/main.ts",
+      "path": "appwrite/functions/cleanup-moderation",
+      "commands": "npm install",
+      "events": [],
+      "schedule": "*/30 * * * *",
+      "timeout": 60
     }
   ]
 }
