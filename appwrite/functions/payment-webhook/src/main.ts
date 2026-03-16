@@ -14,8 +14,13 @@ export default async ({ req, res, log, error }: any) => {
   const databaseId = process.env.APPWRITE_DATABASE_ID!
   const paymentsCol = process.env.APPWRITE_COLLECTION_PAYMENTS!
   const enrollmentsCol = process.env.APPWRITE_COLLECTION_ENROLLMENTS!
+  const owner = (process.env.WEBHOOK_ENROLLMENT_OWNER ?? "next").toLowerCase()
 
   try {
+    if (owner !== "appwrite-function") {
+      return res.json({ skipped: true, reason: "Payment owner is Next.js webhook" })
+    }
+
     // Verify the request comes from a trusted internal caller via shared secret
     const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET
     const callerSecret = req.headers['x-webhook-secret']

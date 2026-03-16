@@ -42,7 +42,7 @@
       "entrypoint": "src/main.ts",
       "path": "appwrite/functions/moderation-actions",
       "commands": "npm install",
-      "events": ["databases.*.collections.moderation-actions.documents.*.create"],
+      "events": ["databases.*.collections.moderation_actions.documents.*.create"],
       "schedule": "",
       "timeout": 30
     },

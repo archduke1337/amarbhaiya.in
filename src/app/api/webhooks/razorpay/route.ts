@@ -4,18 +4,25 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { ID } from "node-appwrite"
 import { verifyRazorpayWebhook } from "@/lib/payments/razorpay"
 import { paymentsDb } from "@/lib/appwrite/database"
 import { createEnrollment } from "@/lib/services/enrollment"
+
+const ENROLLMENT_OWNER = (process.env.WEBHOOK_ENROLLMENT_OWNER ?? "next").toLowerCase()
+const APP_SECRET = process.env.RAZORPAY_WEBHOOK_APP_SECRET
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text()
     const signature = req.headers.get("x-razorpay-signature")
+    const appToken = req.headers.get("x-app-webhook-token")
 
     if (!signature) {
       return NextResponse.json({ error: "Missing signature" }, { status: 400 })
+    }
+
+    if (APP_SECRET && appToken !== APP_SECRET) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const isValid = verifyRazorpayWebhook(body, signature)
@@ -27,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     if (event.event === "payment.captured") {
       const payment = event.payload.payment.entity
-      const { order_id, id: paymentId, amount, method } = payment
+      const { id: paymentId, method } = payment
       const notes = payment.notes || {}
 
       // Update payment record
@@ -38,7 +45,7 @@ export async function POST(req: NextRequest) {
       })
 
       // Create enrollment
-      if (notes.userId && notes.courseId) {
+      if (ENROLLMENT_OWNER === "next" && notes.userId && notes.courseId) {
         await createEnrollment({
           userId: notes.userId,
           courseId: notes.courseId,

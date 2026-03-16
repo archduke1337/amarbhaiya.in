@@ -14,8 +14,13 @@ export default async ({ req, res, log, error }: any) => {
   const DB = process.env.APPWRITE_DATABASE_ID!
   const enrollmentsCol = process.env.APPWRITE_COLLECTION_ENROLLMENTS!
   const notificationsCol = process.env.APPWRITE_COLLECTION_NOTIFICATIONS!
+  const owner = (process.env.WEBHOOK_ENROLLMENT_OWNER ?? "next").toLowerCase()
 
   try {
+    if (owner !== "appwrite-function") {
+      return res.json({ skipped: true, reason: "Enrollment owner is Next.js webhook" })
+    }
+
     // req.bodyJson is the modern way to access parsed payload
     const payment = req.bodyJson
     log(`Processing enrollment for payment: ${payment.$id}`)

@@ -6,7 +6,9 @@
     "build": "next build",
     "dev": "next dev --turbopack",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "check:appwrite-events": "node scripts/validate-appwrite-events.js",
+    "setup:appwrite": "node scripts/setup-appwrite.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.0",

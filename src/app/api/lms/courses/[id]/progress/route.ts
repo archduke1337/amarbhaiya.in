@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { ID } from "node-appwrite"
 import { getLoggedInUser } from "@/lib/appwrite/server"
-import { progressDb } from "@/lib/appwrite/database"
+import { enrollmentsDb, progressDb } from "@/lib/appwrite/database"
 
 export async function GET(
   req: NextRequest,
@@ -46,6 +46,11 @@ export async function POST(
 
     if (!lessonId) {
       return NextResponse.json({ error: "lessonId required" }, { status: 400 })
+    }
+
+    const enrollment = await enrollmentsDb.getByUserAndCourse(user.$id, courseId)
+    if (!enrollment) {
+      return NextResponse.json({ error: "Not enrolled in this course" }, { status: 403 })
     }
 
     const existing = await progressDb.getByUserCourseLesson(user.$id, courseId, lessonId)

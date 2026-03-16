@@ -3,12 +3,12 @@
  */
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import client, { databases } from "@/lib/appwrite/client"
+import { useEffect, useState, useCallback, useMemo, useRef } from "react"
+import client from "@/lib/appwrite/client"
 import { APPWRITE_CONFIG } from "@/config/appwrite"
 import { useAuth } from "@/hooks/useAuth"
 
-type Notification = {
+type AppNotification = {
   $id: string
   title: string
   message: string
@@ -20,11 +20,14 @@ type Notification = {
 
 export function useNotifications() {
   const { user } = useAuth()
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const userId = user?.$id ?? null
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isConnected, setIsConnected] = useState(false)
+  const unsubscribeRef = useRef<null | (() => void)>(null)
 
   const fetchNotifications = useCallback(async () => {
-    if (!user) return
+    if (!userId) return
     try {
       const res = await fetch("/api/notifications")
       if (res.ok) {
@@ -35,29 +38,46 @@ export function useNotifications() {
     } catch (err) {
       console.error("Failed to fetch notifications", err)
     }
-  }, [user])
+  }, [userId])
+
+  const channel = useMemo(
+    () =>
+      `databases.${APPWRITE_CONFIG.databaseId}.collections.${APPWRITE_CONFIG.collections.notifications}.documents`,
+    []
+  )
 
   useEffect(() => {
-    if (!user) return
+    if (!userId) {
+      setNotifications([])
+      setUnreadCount(0)
+      setIsConnected(false)
+      return
+    }
 
     fetchNotifications()
 
-    // Subscribe to real-time changes in the notifications collection
-    // This will catch new notifications as they are created
-    const channel = `databases.${APPWRITE_CONFIG.databaseId}.collections.${APPWRITE_CONFIG.collections.notifications}.documents`
-    
+    // Keep only one active subscription to avoid unnecessary websocket reconnect churn.
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current()
+      unsubscribeRef.current = null
+    }
+
     const unsubscribe = client.subscribe(channel, (response) => {
-      // Check if the document belongs to the current user
-      const doc = response.payload as any
-      if (doc.userId !== user.$id) return
+      const doc = response.payload as AppNotification & { userId?: string }
+      if (doc.userId !== userId) return
 
       if (response.events.includes(`${channel}.*.create`)) {
-        setNotifications((prev) => [doc, ...prev])
-        setUnreadCount((prev) => prev + 1)
-        
-        // Show a browser notification if possible
-        if (Notification.permission === "granted") {
-          new Notification(doc.title, { body: doc.message })
+        setNotifications((prev) => {
+          if (prev.some((n) => n.$id === doc.$id)) return prev
+          return [doc, ...prev]
+        })
+
+        if (!doc.isRead) {
+          setUnreadCount((prev) => prev + 1)
+        }
+
+        if (typeof window !== "undefined" && "Notification" in window && window.Notification.permission === "granted") {
+          new window.Notification(doc.title, { body: doc.message })
         }
       }
 
@@ -65,17 +85,22 @@ export function useNotifications() {
         setNotifications((prev) => 
           prev.map((n) => (n.$id === doc.$id ? { ...n, ...doc } : n))
         )
-        // Recalculate unread count if isRead changed
-        if (doc.isRead === true) {
-          setUnreadCount((prev) => Math.max(0, prev - 1))
-        }
+
+        setUnreadCount((prev) => (doc.isRead ? Math.max(0, prev - 1) : prev))
       }
     })
 
+    unsubscribeRef.current = unsubscribe
+    setIsConnected(true)
+
     return () => {
-      unsubscribe()
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current()
+        unsubscribeRef.current = null
+      }
+      setIsConnected(false)
     }
-  }, [user, fetchNotifications])
+  }, [userId, channel, fetchNotifications])
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -90,5 +115,5 @@ export function useNotifications() {
     }
   }
 
-  return { notifications, unreadCount, markAsRead, refresh: fetchNotifications }
+  return { notifications, unreadCount, markAsRead, refresh: fetchNotifications, isConnected }
 }
