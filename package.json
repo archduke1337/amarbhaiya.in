@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "start": "next start",
     "check:appwrite-events": "node scripts/validate-appwrite-events.js",
+    "check:appwrite-schema-drift": "node scripts/check-appwrite-schema-drift.js",
     "setup:appwrite": "node scripts/setup-appwrite.js",
     "setup:appwrite-schema": "node scripts/setup-appwrite-schema.js"
   },

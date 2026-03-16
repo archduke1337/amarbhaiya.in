@@ -620,7 +620,14 @@ async function main() {
   console.log(`[setup-appwrite-schema] Indexes created: ${createdIndexes}`)
 }
 
-main().catch((err) => {
-  console.error("[setup-appwrite-schema] Failed:", err.message)
-  process.exit(1)
-})
+module.exports = {
+  loadEnv,
+  schema,
+}
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error("[setup-appwrite-schema] Failed:", err.message)
+    process.exit(1)
+  })
+}
