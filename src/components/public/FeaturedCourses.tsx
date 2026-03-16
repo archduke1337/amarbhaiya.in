@@ -1,3 +1,5 @@
+"use client"
+
 import { useCourses } from "@/hooks/useCourses"
 import { motion } from "framer-motion"
 import Link from "next/link"
