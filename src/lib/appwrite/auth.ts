@@ -182,7 +182,7 @@ export async function signUp(formData: FormData, redirectTo?: string | null) {
     if (err?.code === 400) {
       return { error: "Invalid email or password format" }
     }
-    return { error: "Failed to create account. Please try again." }
+    return { error: err?.message || "Failed to create account. Please try again." }
   }
 
   redirect(sanitizeRedirectPath(redirectTo))
