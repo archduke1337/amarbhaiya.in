@@ -4,6 +4,7 @@
 import type { Metadata } from "next"
 import { Navbar } from "@/components/layout/Navbar"
 import { Footer } from "@/components/layout/Footer"
+import { ContactForm } from "@/components/public/ContactForm"
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -16,18 +17,13 @@ export default function ContactPage() {
     <>
       <Navbar />
       <main className="container mx-auto px-4 py-20">
-        <h1 className="text-4xl font-bold mb-6">Contact</h1>
-        <p className="text-muted-foreground mb-8">
-          Got a question? Drop us a message.
-        </p>
-        <form className="grid gap-4 max-w-2xl">
-          <input className="h-10 rounded-md border bg-background px-3" placeholder="Your name" />
-          <input className="h-10 rounded-md border bg-background px-3" placeholder="Email" type="email" />
-          <textarea className="min-h-32 rounded-md border bg-background p-3" placeholder="Message" />
-          <button type="button" className="h-10 rounded-md bg-primary px-4 text-primary-foreground w-fit">
-            Send Message
-          </button>
-        </form>
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold mb-3">Get in Touch</h1>
+          <p className="text-muted-foreground mb-8">
+            Have a question about courses, mentorship, or collaboration? Send me a message and I&apos;ll get back to you.
+          </p>
+          <ContactForm />
+        </div>
       </main>
       <Footer />
     </>

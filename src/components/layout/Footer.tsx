@@ -1,5 +1,5 @@
 /**
- * @fileoverview Footer — brand info, navigation, social links.
+ * @fileoverview Footer — brand info, navigation, social links, legal.
  */
 import Link from "next/link"
 import { ROUTES } from "@/config/routes"
@@ -11,29 +11,30 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-4">
           <div>
             <h3 className="text-lg font-bold mb-3">Amarnath Bhaiya</h3>
-            <p className="text-sm text-muted-foreground">
-              Mentor, System Builder, Career Architect.
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Mentor, System Builder, Career Architect. Helping engineers build real-world expertise.
             </p>
           </div>
           <div>
             <h4 className="text-sm font-semibold mb-3">Platform</h4>
             <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link href={ROUTES.COURSES}>Courses</Link>
-              <Link href={ROUTES.BLOG}>Blog</Link>
-              <Link href={ROUTES.ABOUT}>About</Link>
+              <Link href={ROUTES.COURSES} className="hover:text-foreground transition-colors">Courses</Link>
+              <Link href={ROUTES.BLOG} className="hover:text-foreground transition-colors">Blog</Link>
+              <Link href={ROUTES.ABOUT} className="hover:text-foreground transition-colors">About</Link>
             </nav>
           </div>
           <div>
             <h4 className="text-sm font-semibold mb-3">Support</h4>
             <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link href={ROUTES.CONTACT}>Contact</Link>
+              <Link href={ROUTES.CONTACT} className="hover:text-foreground transition-colors">Contact</Link>
+              <Link href="/community" className="hover:text-foreground transition-colors">Community</Link>
             </nav>
           </div>
           <div>
             <h4 className="text-sm font-semibold mb-3">Legal</h4>
             <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <span>Privacy Policy</span>
-              <span>Terms of Service</span>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
             </nav>
           </div>
         </div>

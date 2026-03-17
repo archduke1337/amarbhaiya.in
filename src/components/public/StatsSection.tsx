@@ -9,6 +9,9 @@ export function StatsSection() {
   const successRate = stats?.successRate ?? 0
   const membersCompact = membersCount >= 1000 ? `${Math.floor(membersCount / 1000)}k+` : `${membersCount}+`
 
+  // Hide entire section if platform is too new (avoids "0+ Engineers Mentored")
+  if (!loading && membersCount < 5) return null
+
   return (
     <section className="py-20 bg-primary/5 transition-opacity duration-500">
       <div className="container px-4 md:px-6 mx-auto">

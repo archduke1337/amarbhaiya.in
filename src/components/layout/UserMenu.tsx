@@ -4,6 +4,7 @@
 "use client"
 import { useAuth } from "@/hooks/useAuth"
 import { signOut } from "@/lib/appwrite/auth"
+import Link from "next/link"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { LogOut, User, Settings, ShieldCheck } from "lucide-react"
 
 export function UserMenu() {
@@ -51,19 +52,25 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer gap-2">
-          <User className="h-4 w-4" /> Profile
+        <DropdownMenuItem className="cursor-pointer gap-2" asChild>
+          <Link href={`/app/profile/${user.$id}`}>
+            <User className="h-4 w-4" /> Profile
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer gap-2">
-          <Settings className="h-4 w-4" /> Settings
+        <DropdownMenuItem className="cursor-pointer gap-2" asChild>
+          <Link href="/app/settings">
+            <Settings className="h-4 w-4" /> Settings
+          </Link>
         </DropdownMenuItem>
         {role === "admin" && (
-           <DropdownMenuItem className="cursor-pointer gap-2 font-semibold text-primary">
-             <ShieldCheck className="h-4 w-4" /> Admin Panel
-           </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer gap-2 font-semibold text-primary" asChild>
+            <Link href="/admin">
+              <ShieldCheck className="h-4 w-4" /> Admin Panel
+            </Link>
+          </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem 
+        <DropdownMenuItem
           className="cursor-pointer gap-2 text-destructive focus:text-destructive"
           onClick={() => signOut()}
         >
