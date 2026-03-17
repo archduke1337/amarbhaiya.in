@@ -20,6 +20,21 @@ export default function LessonPlayerPage() {
   const { course, loading } = useCourse(courseId)
   const { markComplete, isCompleted } = useProgress(courseId)
 
+  // Derive lesson data unconditionally so hooks are always called in the same order
+  const modules = (course as any)?.modules ?? []
+  const allLessons = modules.flatMap((m: any) => m.lessons ?? [])
+  const currentIndex = allLessons.findIndex((l: any) => l.$id === lessonId)
+  const currentLesson: any = allLessons[currentIndex] ?? null
+  const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null
+  const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null
+  const completed = isCompleted(courseId, lessonId)
+
+  // useMemo must be called unconditionally — before any early returns
+  const safeContent = useMemo(
+    () => (currentLesson?.content ? sanitizeHtml(currentLesson.content) : ""),
+    [currentLesson?.content]
+  )
+
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[50vh]">
@@ -30,19 +45,9 @@ export default function LessonPlayerPage() {
 
   if (!course) return <div className="p-8 text-center">Course not found</div>
 
-  const modules = (course as any).modules || []
-  const allLessons = modules.flatMap((m: any) => m.lessons || [])
-  const currentIndex = allLessons.findIndex((l: any) => l.$id === lessonId)
-  const currentLesson = allLessons[currentIndex]
-  
-  const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null
-  const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null
-
   if (!currentLesson) {
     return <div className="p-8 text-center text-muted-foreground">Lesson not found.</div>
   }
-
-  const completed = isCompleted(courseId, lessonId)
 
   const handleCompleteAndNext = () => {
     markComplete(courseId, lessonId)
@@ -50,11 +55,6 @@ export default function LessonPlayerPage() {
       router.push(`/app/courses/${courseId}/${nextLesson.$id}`)
     }
   }
-
-  const safeContent = useMemo(
-    () => currentLesson.content ? sanitizeHtml(currentLesson.content) : "",
-    [currentLesson.content]
-  )
 
   const videoUrl = currentLesson.videoFileId
     ? `${process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT}/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_BUCKET_COURSE_VIDEOS}/files/${currentLesson.videoFileId}/view?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`

@@ -98,6 +98,12 @@ export async function POST(
         isCompleted: isCompleted,
         completedAt: isCompleted ? new Date().toISOString() : null,
       })
+    } else if ((existing as any).isCompleted !== isCompleted) {
+      // Update the record when completion status actually changes
+      await progressDb.update((existing as any).$id, {
+        isCompleted,
+        completedAt: isCompleted ? new Date().toISOString() : null,
+      })
     }
 
     return NextResponse.json({ success: true, lessonId, completed: isCompleted })

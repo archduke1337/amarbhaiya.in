@@ -1,7 +1,7 @@
 /**
  * @fileoverview PhonePe Business payment integration — initiate payment, verify callback.
  */
-import { createHmac } from "crypto"
+import { createHash } from "crypto"
 
 const PHONEPE_ENV = process.env.PHONEPE_ENV ?? "UAT"
 const BASE_URL =
@@ -39,7 +39,8 @@ export async function initiatePhonePePayment(params: PhonePePaymentParams) {
   }
 
   const base64Payload = Buffer.from(JSON.stringify(payload)).toString("base64")
-  const checksum = createHmac("sha256", saltKey)
+  // PhonePe requires plain SHA256 (not HMAC) of concatenated string
+  const checksum = createHash("sha256")
     .update(`${base64Payload}/pg/v1/pay${saltKey}`)
     .digest("hex")
 
@@ -64,7 +65,8 @@ export function verifyPhonePeCallback(responseBody: string, xVerifyHeader: strin
 
   if (!saltKey) return false
 
-  const checksum = createHmac("sha256", saltKey)
+  // PhonePe requires plain SHA256 (not HMAC) of concatenated string
+  const checksum = createHash("sha256")
     .update(`${responseBody}${saltKey}`)
     .digest("hex")
 

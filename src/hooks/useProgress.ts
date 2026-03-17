@@ -39,7 +39,7 @@ export function useProgress(courseId?: string) {
             currentProgress.completed[cId] = Array.from(existing)
           })
           if (legacyProgress.lastLessonId) currentProgress.lastLessonId = legacyProgress.lastLessonId
-          
+
           // Save merged and clear legacy
           localStorage.setItem(storageKey, JSON.stringify(currentProgress))
           localStorage.removeItem(STORAGE_KEY)
@@ -47,7 +47,10 @@ export function useProgress(courseId?: string) {
       }
 
       setState(currentProgress)
-    } catch { /* empty */ }
+    } catch { /* empty */ } finally {
+      // Mark as loaded after localStorage is read — regardless of auth state
+      setIsLoaded(true)
+    }
   }, [user, storageKey])
 
   // 2. Sync with backend if logged in and specific course passed

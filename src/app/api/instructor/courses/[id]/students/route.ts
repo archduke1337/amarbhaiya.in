@@ -47,12 +47,12 @@ export async function GET(
 
     // Fetch ALL progress for all students at once (1 query, not N)
     const allProgress = await progressDb.listByCourseAndUsers(courseId, userIds)
-    const progressMap = new Map(
-      allProgress.documents.map((p: any) => [
-        `${p.userId}-${courseId}`,
-        p.total
-      ])
-    )
+    // Count completed lessons per student by grouping individual progress documents
+    const progressCountMap = new Map<string, number>()
+    for (const p of allProgress.documents as any[]) {
+      const key = `${p.userId}-${courseId}`
+      progressCountMap.set(key, (progressCountMap.get(key) ?? 0) + 1)
+    }
 
     // Map enrollments to student data (no queries needed, just lookups)
     const studentsData = enrollments.documents
@@ -61,7 +61,7 @@ export async function GET(
           const student = userMap.get(enc.userId)
           if (!student) return null
 
-          const studentProgress = progressMap.get(`${enc.userId}-${courseId}`) || 0
+          const studentProgress = progressCountMap.get(`${enc.userId}-${courseId}`) ?? 0
           const progressPercent = totalLessons > 0 
             ? Math.round((studentProgress / totalLessons) * 100) 
             : 0

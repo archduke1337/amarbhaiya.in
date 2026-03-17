@@ -6,6 +6,7 @@ import { getLoggedInUser } from "@/lib/appwrite/server"
 import { coursesDb, enrollmentsDb, paymentsDb, usersDb, courseReviewsDb } from "@/lib/appwrite/database"
 import { Query } from "node-appwrite"
 import { ROLES } from "@/config/roles"
+import { APPWRITE_CONFIG } from "@/config/appwrite"
 import { enforceRateLimit, addRateLimitHeaders } from "@/lib/ratelimit-helper"
 
 export async function GET(req: NextRequest) {
@@ -67,8 +68,8 @@ export async function GET(req: NextRequest) {
         title: course.title,
         students: courseEnrollments.length,
         revenue,
-        thumbnail: course.thumbnailId 
-          ? `${process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT}/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_BUCKET_COURSE_THUMBNAILS}/files/${course.thumbnailId}/view?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`
+        thumbnail: (course as any).thumbnailFileId
+          ? `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.buckets.courseThumbnails}/files/${(course as any).thumbnailFileId}/view?project=${APPWRITE_CONFIG.projectId}`
           : null
       }
     })
@@ -79,7 +80,6 @@ export async function GET(req: NextRequest) {
       .slice(0, 5)
 
     // Batch fetch all users at once (prevent N+1 query)
-    const userIds = [...new Set(recentEnrolledDocs.map((en: any) => en.userId))]
     const allUsers = await usersDb.list({ limit: 5000 })
     const userMap = new Map(allUsers.documents.map((u: any) => [u.$id, u]))
 

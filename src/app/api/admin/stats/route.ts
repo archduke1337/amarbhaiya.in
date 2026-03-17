@@ -19,11 +19,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Parallel fetch for speed
+    // Parallel fetch for speed — fetch all completed payments for accurate revenue
     const [users, courses, payments, moderation, recentUsers, recentMod] = await Promise.all([
       usersDb.list({ limit: 1 }),
       coursesDb.list({ limit: 1 }),
-      paymentsDb.list({ limit: 1 }),
+      paymentsDb.list({ queries: [Query.equal("status", "completed"), Query.limit(5000)] }),
       moderationActionsDb.list({ limit: 1 }),
       usersDb.list({ limit: 5, queries: [Query.orderDesc("$createdAt")] }),
       moderationActionsDb.list({ limit: 5, queries: [Query.orderDesc("$createdAt")] })

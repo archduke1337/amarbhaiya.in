@@ -25,7 +25,7 @@ export const ROUTES = {
   APP_LESSON: (courseId: string, lessonId: string) => `/app/courses/${courseId}/${lessonId}` as const,
   APP_COMMUNITY: "/app/community",
   APP_FORUM_CATEGORY: (categoryId: string) => `/app/community/${categoryId}` as const,
-  APP_FORUM_THREAD: (categoryId: string, threadId: string) => `/app/community/${categoryId}/${threadId}` as const,
+  APP_FORUM_THREAD: (threadId: string) => `/app/community/thread/${threadId}` as const,
   APP_LIVE: (sessionId: string) => `/app/live/${sessionId}` as const,
   APP_CERTIFICATES: "/app/certificates",
   APP_PROFILE: (id: string) => `/app/profile/${id}` as const,

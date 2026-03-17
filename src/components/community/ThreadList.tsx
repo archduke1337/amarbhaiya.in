@@ -57,7 +57,7 @@ export function ThreadList({ categoryId }: { categoryId: string }) {
       <div className="flex items-center justify-between mb-8">
         <div>
            <h2 className="text-2xl font-black">{data.category.name}</h2>
-           <p className="text-muted-foreground">{data.threads.length} Disussions</p>
+           <p className="text-muted-foreground">{data.threads.length} Discussions</p>
         </div>
         <Button className="rounded-full shadow-lg shadow-primary/20 gap-2">
            <Plus className="w-5 h-5" /> New Post
