@@ -23,7 +23,7 @@ export function useLiveSession(sessionId?: string) {
         if (!res.ok) throw new Error(json.error)
         if (active) setSession(json.session)
       } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : "Failed to load session")
+        if (active) setError((err && typeof err === 'object' && 'message' in err) ? String((err as any).message) : "Failed to load session")
       } finally {
         if (active) setLoading(false)
       }

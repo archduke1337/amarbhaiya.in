@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   description:
     "A mentor who builds systems that guide students from confusion → clarity → outcomes.",
   keywords: ["Amarnath Bhaiya", "Mentor", "Career Architect", "System Builder", "LMS"],
-  icons: { icon: "/favicon.ico" },
+  icons: { icon: "/favicon.svg" },
   openGraph: {
     title: "Amarnath Bhaiya | Mentor, System Builder, Career Architect",
     description: "A mentor who builds systems that guide students from confusion → clarity → outcomes.",

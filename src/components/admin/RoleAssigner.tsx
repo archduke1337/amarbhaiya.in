@@ -38,7 +38,7 @@ export function RoleAssigner({ userId, currentRole }: RoleAssignerProps) {
 
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update role")
+      setError((err && typeof err === 'object' && 'message' in err) ? String((err as any).message) : "Failed to update role")
     } finally {
       setSaving(false)
     }

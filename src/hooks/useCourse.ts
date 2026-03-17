@@ -24,7 +24,7 @@ export function useCourse(courseId?: string) {
         if (!res.ok) throw new Error(json.error || "Failed to load course")
         if (active) setCourse(json.course)
       } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : "Failed to load course")
+        if (active) setError((err && typeof err === 'object' && 'message' in err) ? String((err as any).message) : "Failed to load course")
       } finally {
         if (active) setLoading(false)
       }
@@ -51,7 +51,7 @@ export function useCourseList() {
         if (!res.ok) throw new Error(json.error || "Failed to load courses")
         if (active) setCourses(json.courses ?? [])
       } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : "Failed to load courses")
+        if (active) setError((err && typeof err === 'object' && 'message' in err) ? String((err as any).message) : "Failed to load courses")
       } finally {
         if (active) setLoading(false)
       }
