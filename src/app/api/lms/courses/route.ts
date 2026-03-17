@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { Query } from "node-appwrite"
-import { coursesDb, categoriesDb } from "@/lib/appwrite/database"
+import { coursesDb } from "@/lib/appwrite/database"
 import { APPWRITE_CONFIG } from "@/config/appwrite"
 import { enforceRateLimit, addRateLimitHeaders } from "@/lib/ratelimit-helper"
 

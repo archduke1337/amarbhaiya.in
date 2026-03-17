@@ -15,17 +15,17 @@ const rateLimitStore = new Map<string, RateLimitWindow>()
  * Rate limit configuration
  */
 export const RATE_LIMIT_CONFIG = {
-  // Public endpoints: 30 requests per minute
-  PUBLIC: { limit: 100, windowMs: 60 * 1000 },
+  // Public endpoints: 60 requests per minute
+  PUBLIC: { limit: 60, windowMs: 60 * 1000 },
   
-  // Auth endpoints (login, register): 5 requests per 15 minutes
-  AUTH: { limit: 50, windowMs: 15 * 60 * 1000 },
+  // Auth endpoints (login, register): 10 requests per 15 minutes
+  AUTH: { limit: 10, windowMs: 15 * 60 * 1000 },
   
-  // API endpoints (authenticated): 60 requests per minute
-  API: { limit: 200, windowMs: 60 * 1000 },
+  // API endpoints (authenticated): 120 requests per minute
+  API: { limit: 120, windowMs: 60 * 1000 },
   
-  // Webhook endpoints: 100 requests per minute
-  WEBHOOK: { limit: 1000, windowMs: 60 * 1000 },
+  // Webhook endpoints: 200 requests per minute
+  WEBHOOK: { limit: 200, windowMs: 60 * 1000 },
 }
 
 /**

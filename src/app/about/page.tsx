@@ -1,8 +1,15 @@
 /**
  * @fileoverview About page — Amarnath's story, mission, values.
  */
+import type { Metadata } from "next"
 import { Navbar } from "@/components/layout/Navbar"
 import { Footer } from "@/components/layout/Footer"
+
+export const metadata: Metadata = {
+  title: "About",
+  description: "Learn about Amarnath Bhaiya — a mentor who builds systems that guide students from confusion to clarity and real career outcomes.",
+  alternates: { canonical: "/about" },
+}
 
 export default function AboutPage() {
   return (

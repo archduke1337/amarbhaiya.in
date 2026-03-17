@@ -66,7 +66,7 @@ export interface Progress extends BaseDocument {
   userId: string
   courseId: string
   lessonId: string
-  completed: boolean
+  isCompleted: boolean
   completedAt?: string
   watchTimeSeconds: number
 }

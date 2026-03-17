@@ -145,8 +145,8 @@ export const enrollmentsDb = {
 export const progressDb = {
   list: (params?: ListParams) => listDocuments(collections.progress, params),
   get: (id: string) => getDocument(collections.progress, id),
-  create: (id: string, data: Record<string, unknown>) => createDocument(collections.progress, id, data),
-  update: (id: string, data: Record<string, unknown>) => updateDocument(collections.progress, id, data),
+  create: (id: string, data: Record<string, unknown>) => createDocument(collections.progress, id, data, true),
+  update: (id: string, data: Record<string, unknown>) => updateDocument(collections.progress, id, data, true),
   getByUserCourseLesson: async (userId: string, courseId: string, lessonId: string) => {
     const result = await listDocuments(collections.progress, {
       queries: [Query.equal("userId", userId), Query.equal("courseId", courseId), Query.equal("lessonId", lessonId)],
@@ -244,9 +244,9 @@ export const sessionRsvpsDb = {
 export const courseCommentsDb = {
   list: (params?: ListParams) => listDocuments(collections.courseComments, params),
   get: (id: string) => getDocument(collections.courseComments, id),
-  create: (id: string, data: Record<string, unknown>) => createDocument(collections.courseComments, id, data),
-  update: (id: string, data: Record<string, unknown>) => updateDocument(collections.courseComments, id, data),
-  delete: (id: string) => deleteDocument(collections.courseComments, id),
+  create: (id: string, data: Record<string, unknown>) => createDocument(collections.courseComments, id, data, true),
+  update: (id: string, data: Record<string, unknown>) => updateDocument(collections.courseComments, id, data, true),
+  delete: (id: string) => deleteDocument(collections.courseComments, id, true),
   listByLesson: (lessonId: string) =>
     listDocuments(collections.courseComments, { queries: [Query.equal("lessonId", lessonId), Query.orderDesc("$createdAt")] }),
 }

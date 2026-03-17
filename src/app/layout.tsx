@@ -25,12 +25,24 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   metadataBase: new URL(getPublicAppUrl()),
-  title: "Amarnath Bhaiya | Mentor, System Builder, Career Architect",
+  title: {
+    default: "Amarnath Bhaiya | Mentor, System Builder, Career Architect",
+    template: "%s | Amarnath Bhaiya",
+  },
   description:
     "A mentor who builds systems that guide students from confusion → clarity → outcomes.",
-  keywords: ["Amarnath Bhaiya", "Mentor", "Career Architect", "System Builder", "LMS"],
+  keywords: ["Amarnath Bhaiya", "Mentor", "Career Architect", "System Builder", "LMS", "Online Courses"],
   icons: { icon: "/favicon.svg" },
+  alternates: { canonical: "/" },
   openGraph: {
+    type: "website",
+    siteName: "Amarnath Bhaiya",
+    title: "Amarnath Bhaiya | Mentor, System Builder, Career Architect",
+    description: "A mentor who builds systems that guide students from confusion → clarity → outcomes.",
+    images: ["/og-image.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
     title: "Amarnath Bhaiya | Mentor, System Builder, Career Architect",
     description: "A mentor who builds systems that guide students from confusion → clarity → outcomes.",
     images: ["/og-image.jpg"],

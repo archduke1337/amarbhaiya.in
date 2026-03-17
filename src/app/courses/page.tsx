@@ -1,10 +1,16 @@
 /**
  * @fileoverview Public course catalogue — filterable grid of published courses.
  */
+import type { Metadata } from "next"
 import { Navbar } from "@/components/layout/Navbar"
 import { Footer } from "@/components/layout/Footer"
-
 import { CourseCatalogue } from "@/components/courses/CourseCatalogue"
+
+export const metadata: Metadata = {
+  title: "Courses",
+  description: "Explore structured roadmaps and courses to master software engineering internals. Beginner to advanced tracks available.",
+  alternates: { canonical: "/courses" },
+}
 
 export default function CoursesPage() {
   return (

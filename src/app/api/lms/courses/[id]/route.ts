@@ -3,6 +3,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { Query } from "node-appwrite"
 import { coursesDb, modulesDb, lessonsDb } from "@/lib/appwrite/database"
 
 export async function GET(
@@ -17,14 +18,24 @@ export async function GET(
       return NextResponse.json({ error: "Course not found" }, { status: 404 })
     }
 
-    // Fetch modules and lessons
-    const modulesResult = await modulesDb.listByCourse(id)
-    const modules = await Promise.all(
-      modulesResult.documents.map(async (mod) => {
-        const lessonsResult = await lessonsDb.listByModule(mod.$id)
-        return { ...mod, lessons: lessonsResult.documents }
-      })
-    )
+    // Fetch modules and ALL lessons for this course in 2 queries (not N+2)
+    const [modulesResult, allLessonsResult] = await Promise.all([
+      modulesDb.listByCourse(id),
+      lessonsDb.list({ queries: [Query.equal("courseId", id), Query.orderAsc("order")], limit: 500 }),
+    ])
+
+    // Group lessons by moduleId in JS
+    const lessonsByModule = new Map<string, typeof allLessonsResult.documents>()
+    for (const lesson of allLessonsResult.documents) {
+      const mid = (lesson as any).moduleId as string
+      if (!lessonsByModule.has(mid)) lessonsByModule.set(mid, [])
+      lessonsByModule.get(mid)!.push(lesson)
+    }
+
+    const modules = modulesResult.documents.map((mod) => ({
+      ...mod,
+      lessons: lessonsByModule.get(mod.$id) ?? [],
+    }))
 
     return NextResponse.json({ course: { ...course, modules } })
   } catch (error) {

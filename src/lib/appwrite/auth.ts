@@ -88,14 +88,17 @@ const VALID_ROLES = Object.values(ROLES) as string[]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+const SAFE_REDIRECT_PREFIXES = ["/app/", "/instructor/", "/admin/", "/moderator/"]
+
 function sanitizeRedirectPath(redirectTo?: string | null) {
   if (!redirectTo) return "/app/dashboard"
+  // Block non-path, protocol-relative, and encoded attacks
   if (!redirectTo.startsWith("/")) return "/app/dashboard"
   if (redirectTo.startsWith("//")) return "/app/dashboard"
-  if (redirectTo.startsWith("/auth")) return "/app/dashboard"
-  // Block protocol-relative and data URIs
-  if (/^\/[^a-z]/i.test(redirectTo) && redirectTo.startsWith("//")) return "/app/dashboard"
-  return redirectTo
+  if (redirectTo.includes("\\n") || redirectTo.includes("\\r") || redirectTo.includes("%0")) return "/app/dashboard"
+  // Only allow known route prefixes
+  const isAllowed = SAFE_REDIRECT_PREFIXES.some((p) => redirectTo.startsWith(p))
+  return isAllowed ? redirectTo : "/app/dashboard"
 }
 
 function extractFormData(formData: FormData, fields: string[]): Record<string, string> {
@@ -147,8 +150,10 @@ export async function signUp(formData: FormData, redirectTo?: string | null) {
   const { name, email, password } = parsed.data
 
   try {
-    const { account } = await createGuestClient()
-    const user = await account.create(ID.unique(), email, password, name)
+    // Use admin client for account.create() to bypass server-side IP rate limits
+    // (per Appwrite SSR docs — all server requests share one IP without API key)
+    const { account: adminAccount } = await createAdminClient()
+    const user = await adminAccount.create(ID.unique(), email, password, name)
     
     // Create the user profile in the database
     const { databases } = await createAdminClient()
@@ -166,7 +171,7 @@ export async function signUp(formData: FormData, redirectTo?: string | null) {
       }
     )
 
-    const session = await account.createEmailPasswordSession(email, password)
+    const session = await adminAccount.createEmailPasswordSession(email, password)
 
     ;(await cookies()).set(COOKIE_NAME, session.secret, {
       ...COOKIE_OPTIONS,

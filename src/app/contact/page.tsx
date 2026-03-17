@@ -1,8 +1,15 @@
 /**
  * @fileoverview Contact page — EmailJS-powered contact form.
  */
+import type { Metadata } from "next"
 import { Navbar } from "@/components/layout/Navbar"
 import { Footer } from "@/components/layout/Footer"
+
+export const metadata: Metadata = {
+  title: "Contact",
+  description: "Get in touch with Amarnath Bhaiya. Ask questions, request mentorship, or explore collaboration opportunities.",
+  alternates: { canonical: "/contact" },
+}
 
 export default function ContactPage() {
   return (

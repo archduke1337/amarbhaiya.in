@@ -1,8 +1,15 @@
 /**
  * @fileoverview Blog listing — all published articles.
  */
+import type { Metadata } from "next"
 import { Navbar } from "@/components/layout/Navbar"
 import { Footer } from "@/components/layout/Footer"
+
+export const metadata: Metadata = {
+  title: "Blog",
+  description: "Articles, guides, and insights on career strategy, project-building, and interview preparation from Amarnath Bhaiya.",
+  alternates: { canonical: "/blog" },
+}
 
 export default function BlogPage() {
   const posts = [

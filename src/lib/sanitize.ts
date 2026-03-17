@@ -77,8 +77,13 @@ function sanitizeNode(node: Node, doc: Document): Node | null {
 
 export function sanitizeHtml(dirty: string): string {
   if (typeof window === "undefined") {
-    // SSR fallback: strip all tags
-    return dirty.replace(/<[^>]*>/g, "")
+    // SSR fallback: strip dangerous tags but preserve safe structural ones
+    // Remove script, style, iframe, object, embed, form, input tags completely
+    const stripped = dirty
+      .replace(/<(script|style|iframe|object|embed|form|input|textarea|button|select)[\s\S]*?<\/\1>/gi, "")
+      .replace(/<(script|style|iframe|object|embed|form|input|textarea|button|select)[^>]*\/?>/gi, "")
+    // Remove event handlers (onclick, onerror, etc.)
+    return stripped.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, "")
   }
 
   const parser = new DOMParser()
