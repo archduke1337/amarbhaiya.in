@@ -54,11 +54,17 @@ export async function getDatabases(useAdmin = false) {
     const { databases } = await createAdminClient()
     return databases
   }
-  const { databases } = await createSessionClient()
-  return databases
+  try {
+    const { databases } = await createSessionClient()
+    return databases
+  } catch {
+    // Fallback gracefully for anonymous/public requests
+    const { databases } = await createGuestClient()
+    return databases
+  }
 }
 
-/** Create a guest client — for login/signup */
+/** Create a guest client — for login/signup and public data */
 export async function createGuestClient() {
   const client = new Client()
     .setEndpoint(APPWRITE_CONFIG.endpoint)
@@ -66,6 +72,7 @@ export async function createGuestClient() {
 
   return {
     get account() { return new Account(client) },
+    get databases() { return new Databases(client) },
   }
 }
 
