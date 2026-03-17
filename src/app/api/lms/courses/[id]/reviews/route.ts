@@ -1,10 +1,28 @@
 /**
  * @fileoverview GET/POST /api/lms/courses/[id]/reviews — handle student star ratings and feedback.
+ * Includes Zod input validation and HTML sanitization for comments.
  */
 import { NextResponse, NextRequest } from "next/server"
+import { z } from "zod"
 import { courseReviewsDb, enrollmentsDb } from "@/lib/appwrite/database"
 import { getLoggedInUser } from "@/lib/appwrite/server"
 import { ID } from "node-appwrite"
+import { sanitizeHtml } from "@/lib/sanitize"
+
+// ─── Validation Schemas ──────────────────────────────────────────────────────
+
+const submitReviewSchema = z.object({
+  rating: z
+    .number()
+    .int("Rating must be a whole number")
+    .min(1, "Rating must be at least 1")
+    .max(5, "Rating cannot exceed 5"),
+  comment: z
+    .string()
+    .max(5000, "Comment cannot exceed 5000 characters")
+    .optional()
+    .default(""),
+})
 
 export async function GET(
   req: NextRequest,
@@ -41,13 +59,22 @@ export async function POST(
     }
 
     const { id: courseId } = await params
-    const { rating, comment } = await req.json()
-    const numericRating = Number(rating)
-    const normalizedComment = typeof comment === "string" ? comment.trim() : ""
+    const body = await req.json()
 
-    if (!numericRating || numericRating < 1 || numericRating > 5) {
-      return NextResponse.json({ error: "Valid rating (1-5) is required" }, { status: 400 })
+    // Validate input
+    const validation = submitReviewSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          error: "Invalid input", 
+          details: validation.error.flatten().fieldErrors 
+        }, 
+        { status: 400 }
+      )
     }
+
+    const { rating, comment } = validation.data
+    const sanitizedComment = comment ? sanitizeHtml(comment) : ""
 
     const enrollment = await enrollmentsDb.getByUserAndCourse(user.$id, courseId)
     if (!enrollment) {
@@ -58,8 +85,8 @@ export async function POST(
 
     if (existing) {
       const updated = await courseReviewsDb.update((existing as any).$id, {
-        rating: Math.round(numericRating),
-        comment: normalizedComment,
+        rating,
+        comment: sanitizedComment,
         userName: user.name,
         status: "approved",
       })
@@ -70,8 +97,8 @@ export async function POST(
       userId: user.$id,
       userName: user.name,
       courseId,
-      rating: Math.round(numericRating),
-      comment: normalizedComment,
+      rating,
+      comment: sanitizedComment,
       status: "approved"
     })
 

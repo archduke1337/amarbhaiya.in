@@ -16,25 +16,19 @@ export async function GET(req: NextRequest) {
       queries: [Query.orderDesc("$createdAt"), Query.limit(3)],
     })
 
-    const testimonials = await Promise.all(
-      reviews.documents.map(async (review) => {
-        let name = "Anonymous Student"
-        try {
-          // Fetch user details for the review if possible
-          if (review.userId) {
-            const user = await usersDb.get(review.userId)
-            name = user.name || name
-          }
-        } catch (e) {
-          // Ignore failures for individual user fetches
-        }
-        return {
-          name,
-          role: "Student",
-          text: review.content || review.comment || "Great course!",
-        }
-      })
-    )
+    // Batch fetch all users at once instead of per-review (prevent N+1)
+    const userIds = [...new Set(reviews.documents.map((r: any) => r.userId).filter(Boolean))]
+    const allUsers = await usersDb.list({ limit: 5000 })
+    const userMap = new Map(allUsers.documents.map((u: any) => [u.$id, u]))
+
+    const testimonials = reviews.documents.map((review: any) => {
+      const user = userMap.get(review.userId)
+      return {
+        name: user?.name || "Anonymous Student",
+        role: "Student",
+        text: review.content || review.comment || "Great course!",
+      }
+    })
 
     const response = NextResponse.json({ testimonials })
     return addRateLimitHeaders(response, req)

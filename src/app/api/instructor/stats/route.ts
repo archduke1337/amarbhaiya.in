@@ -1,13 +1,18 @@
 /**
  * @fileoverview GET /api/instructor/stats — Aggregated analytics for the instructor dashboard.
  */
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getLoggedInUser } from "@/lib/appwrite/server"
 import { coursesDb, enrollmentsDb, paymentsDb, usersDb, courseReviewsDb } from "@/lib/appwrite/database"
 import { Query } from "node-appwrite"
 import { ROLES } from "@/config/roles"
+import { enforceRateLimit, addRateLimitHeaders } from "@/lib/ratelimit-helper"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Rate limiting
+  const rateLimitResponse = enforceRateLimit(req, "API")
+  if (rateLimitResponse) return rateLimitResponse
+
   try {
     const user = await getLoggedInUser()
     if (!user || (!user.labels.includes(ROLES.INSTRUCTOR) && !user.labels.includes(ROLES.ADMIN))) {
@@ -73,27 +78,25 @@ export async function GET() {
       .sort((a: any, b: any) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime())
       .slice(0, 5)
 
-    const recentEnrollments = await Promise.all(recentEnrolledDocs.map(async (en: any) => {
-      try {
-        const student = await usersDb.get(en.userId)
-        return {
-          id: en.$id,
-          studentName: student.name,
-          studentEmail: student.email,
-          courseTitle: instructorCourses.documents.find(c => c.$id === en.courseId)?.title || "Unknown Course",
-          enrolledAt: en.$createdAt
-        }
-      } catch {
-        return {
-          id: en.$id,
-          studentName: "Unknown Student",
-          courseTitle: "Unknown Course",
-          enrolledAt: en.$createdAt
-        }
-      }
-    }))
+    // Batch fetch all users at once (prevent N+1 query)
+    const userIds = [...new Set(recentEnrolledDocs.map((en: any) => en.userId))]
+    const allUsers = await usersDb.list({ limit: 5000 })
+    const userMap = new Map(allUsers.documents.map((u: any) => [u.$id, u]))
 
-    return NextResponse.json({
+    const recentEnrollments = recentEnrolledDocs.map((en: any) => {
+      const student = userMap.get(en.userId)
+      const course = instructorCourses.documents.find(c => c.$id === en.courseId)
+      
+      return {
+        id: en.$id,
+        studentName: student?.name || "Unknown Student",
+        studentEmail: student?.email || "Unknown Email",
+        courseTitle: course?.title || "Unknown Course",
+        enrolledAt: en.$createdAt
+      }
+    })
+
+    const response = NextResponse.json({
       stats: {
         totalStudents,
         totalRevenue: totalRevenue / 100, // Assuming cents/paisa
@@ -103,6 +106,8 @@ export async function GET() {
       coursePerformance,
       recentEnrollments
     })
+
+    return addRateLimitHeaders(response, req)
   } catch (error) {
     console.error("[API] GET /api/instructor/stats", error)
     return NextResponse.json({ error: "Failed to fetch instructor stats" }, { status: 500 })
