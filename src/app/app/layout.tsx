@@ -1,8 +1,10 @@
 /**
- * @fileoverview Student area layout — session guard, sidebar, all roles allowed.
+ * @fileoverview Student panel layout.
  */
 import { PanelLayout } from "@/components/layout/PanelLayout"
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export const dynamic = "force-dynamic"
+
+export default function StudentLayout({ children }: { children: React.ReactNode }) {
   return <PanelLayout panel="student">{children}</PanelLayout>
 }
