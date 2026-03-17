@@ -1,13 +1,18 @@
 /**
  * @fileoverview GET /api/admin/stats — Fetches platform-wide stats for admin dashboard.
  */
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getLoggedInUser } from "@/lib/appwrite/server"
 import { usersDb, coursesDb, paymentsDb, moderationActionsDb } from "@/lib/appwrite/database"
 import { Query } from "node-appwrite"
 import { ROLES } from "@/config/roles"
+import { enforceRateLimit, addRateLimitHeaders } from "@/lib/ratelimit-helper"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Rate limiting - admin endpoint
+  const rateLimitResponse = enforceRateLimit(req, "API")
+  if (rateLimitResponse) return rateLimitResponse
+
   try {
     const user = await getLoggedInUser()
     if (!user || !user.labels.includes(ROLES.ADMIN)) {
@@ -52,19 +57,21 @@ export async function GET() {
       revenueByCourse[courseId] = (revenueByCourse[courseId] || 0) + amount
     })
 
-    // Map course IDs to titles for the breakdown
-    const courseBreakedown = await Promise.all(
-      Object.entries(revenueByCourse).map(async ([id, rev]) => {
-        try {
-          const c = await coursesDb.get(id)
-          return { id, title: (c as any).title, revenue: rev }
-        } catch {
-          return { id, title: "Deleted Course", revenue: rev }
-        }
-      })
-    )
+    // Fetch ALL courses at once (1 query) instead of per-entry (N queries)
+    const allCourses = await coursesDb.list({ limit: 5000 })
+    const courseMap = new Map(allCourses.documents.map((c: any) => [c.$id, c]))
 
-    return NextResponse.json({
+    // Map course IDs to titles using the pre-fetched courses (no additional queries needed)
+    const courseBreakedown = Object.entries(revenueByCourse).map(([id, rev]) => {
+      const course = courseMap.get(id)
+      return {
+        id,
+        title: course?.title || "Deleted Course",
+        revenue: rev
+      }
+    })
+
+    const response = NextResponse.json({
       stats: {
         totalRevenue: platformRevenue,
         totalUsers: users.total,
@@ -74,6 +81,8 @@ export async function GET() {
       revenueByCourse: courseBreakedown,
       recentActivity
     })
+
+    return addRateLimitHeaders(response, req)
   } catch (error) {
     console.error("[API] GET /api/admin/stats", error)
     return NextResponse.json({ error: "Failed to fetch admin stats" }, { status: 500 })

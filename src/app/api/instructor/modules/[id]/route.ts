@@ -3,17 +3,29 @@
  * DELETE /api/instructor/modules/[id] — delete module.
  */
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { getLoggedInUser } from "@/lib/appwrite/server"
 import { modulesDb } from "@/lib/appwrite/database"
 import { ROLES } from "@/config/roles"
 import { verifyCourseOwnership } from "@/lib/services/instructor"
+import { enforceRateLimit } from "@/lib/ratelimit-helper"
 
-const ALLOWED_MODULE_FIELDS = ["title", "description", "order", "isPublished"] as const
+// Zod schema for module update
+const updateModuleSchema = z.object({
+  title: z.string().min(1).max(255).optional(),
+  description: z.string().max(2000).optional(),
+  order: z.number().int().min(0).optional(),
+  isPublished: z.boolean().optional(),
+})
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Rate limiting
+  const rateLimitResponse = enforceRateLimit(req, "API")
+  if (rateLimitResponse) return rateLimitResponse
+
   try {
     const user = await getLoggedInUser()
     if (!user || (!user.labels.includes(ROLES.INSTRUCTOR) && !user.labels.includes(ROLES.ADMIN))) {
@@ -33,12 +45,20 @@ export async function PATCH(
       return NextResponse.json({ error: ownership.error }, { status: ownership.status })
     }
 
-    // Whitelist allowed fields
+    // Validate input with Zod
     const body = await req.json()
-    const updates: Record<string, unknown> = {}
-    for (const field of ALLOWED_MODULE_FIELDS) {
-      if (field in body) updates[field] = body[field]
+    const result = updateModuleSchema.safeParse(body)
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid input",
+          details: result.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      )
     }
+
+    const updates = result.data
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })

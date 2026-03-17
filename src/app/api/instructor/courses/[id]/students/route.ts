@@ -24,30 +24,52 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    // Fetch enrollments
+    // Fetch enrollments (1 query)
     const enrollments = await enrollmentsDb.listByCourse(courseId)
 
-    // Fetch total lessons for the course
+    if (enrollments.documents.length === 0) {
+      return NextResponse.json({
+        students: [],
+        total: 0
+      })
+    }
+
+    // Fetch total lessons for the course (1 query)
     const allLessons = await lessonsDb.listByCourse(courseId)
     const totalLessons = allLessons.total
 
-    // Fetch user details and progress for each enrollment
-    const studentsData = await Promise.all(
-      enrollments.documents.map(async (enc: any) => {
-        try {
-          const [student, userProgress] = await Promise.all([
-            usersDb.get(enc.userId),
-            progressDb.listByUserAndCourse(enc.userId, courseId)
-          ])
+    // Extract user IDs
+    const userIds = enrollments.documents.map((e: any) => e.userId)
 
+    // Fetch ALL users at once instead of per-enrollment (1 query, not N)
+    const allUsers = await usersDb.list({ limit: 5000 })
+    const userMap = new Map(allUsers.documents.map((u: any) => [u.$id, u]))
+
+    // Fetch ALL progress for all students at once (1 query, not N)
+    const allProgress = await progressDb.listByCourseAndUsers(courseId, userIds)
+    const progressMap = new Map(
+      allProgress.documents.map((p: any) => [
+        `${p.userId}-${courseId}`,
+        p.total
+      ])
+    )
+
+    // Map enrollments to student data (no queries needed, just lookups)
+    const studentsData = enrollments.documents
+      .map((enc: any) => {
+        try {
+          const student = userMap.get(enc.userId)
+          if (!student) return null
+
+          const studentProgress = progressMap.get(`${enc.userId}-${courseId}`) || 0
           const progressPercent = totalLessons > 0 
-            ? Math.round((userProgress.total / totalLessons) * 100) 
+            ? Math.round((studentProgress / totalLessons) * 100) 
             : 0
 
           return {
             id: student.$id,
-            name: (student as any).name || "Unknown",
-            email: (student as any).email || "Unknown",
+            name: student.name || "Unknown",
+            email: student.email || "Unknown",
             progress: progressPercent,
             joinedAt: new Date(enc.$createdAt).toLocaleDateString("en-US", {
               month: "short",
@@ -59,10 +81,10 @@ export async function GET(
           return null
         }
       })
-    )
+      .filter((s: any) => s !== null)
 
     return NextResponse.json({
-      students: studentsData.filter(s => s !== null),
+      students: studentsData,
       total: enrollments.total
     })
   } catch (error) {

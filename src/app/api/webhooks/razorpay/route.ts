@@ -7,12 +7,17 @@ import { NextRequest, NextResponse } from "next/server"
 import { verifyRazorpayWebhook } from "@/lib/payments/razorpay"
 import { paymentsDb } from "@/lib/appwrite/database"
 import { createEnrollment } from "@/lib/services/enrollment"
+import { enforceRateLimit } from "@/lib/ratelimit-helper"
 
 const ENROLLMENT_OWNER = (process.env.WEBHOOK_ENROLLMENT_OWNER ?? "next").toLowerCase()
 const APP_SECRET = process.env.RAZORPAY_WEBHOOK_APP_SECRET
 const REQUIRE_APP_SECRET = process.env.NODE_ENV === "production" && ENROLLMENT_OWNER === "next"
 
 export async function POST(req: NextRequest) {
+  // Rate limiting - webhook endpoint (higher limit)
+  const rateLimitResponse = enforceRateLimit(req, "WEBHOOK")
+  if (rateLimitResponse) return rateLimitResponse
+
   try {
     if (REQUIRE_APP_SECRET && !APP_SECRET) {
       console.error("[Razorpay Webhook] Missing RAZORPAY_WEBHOOK_APP_SECRET in production")

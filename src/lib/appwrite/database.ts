@@ -85,38 +85,38 @@ export const categoriesDb = {
 // ─── Modules ──────────────────────────────────────
 
 export const modulesDb = {
-  list: (params?: ListParams) => listDocuments(collections.modules, params),
+  list: (params?: ListParams) => listDocuments(collections.modules, { ...params, limit: params?.limit || 100 }),
   get: (id: string) => getDocument(collections.modules, id),
   create: (id: string, data: Record<string, unknown>) => createDocument(collections.modules, id, data, true),
   update: (id: string, data: Record<string, unknown>) => updateDocument(collections.modules, id, data, true),
   delete: (id: string) => deleteDocument(collections.modules, id, true),
-  listByCourse: (courseId: string) =>
-    listDocuments(collections.modules, { queries: [Query.equal("courseId", courseId), Query.orderAsc("order")] }),
+  listByCourse: (courseId: string, limit = 100) =>
+    listDocuments(collections.modules, { queries: [Query.equal("courseId", courseId), Query.orderAsc("order")], limit }),
 }
 
 // ─── Lessons ──────────────────────────────────────
 
 export const lessonsDb = {
-  list: (params?: ListParams) => listDocuments(collections.lessons, params),
+  list: (params?: ListParams) => listDocuments(collections.lessons, { ...params, limit: params?.limit || 100 }),
   get: (id: string) => getDocument(collections.lessons, id),
   create: (id: string, data: Record<string, unknown>) => createDocument(collections.lessons, id, data, true),
   update: (id: string, data: Record<string, unknown>) => updateDocument(collections.lessons, id, data, true),
   delete: (id: string) => deleteDocument(collections.lessons, id, true),
-  listByModule: (moduleId: string) =>
-    listDocuments(collections.lessons, { queries: [Query.equal("moduleId", moduleId), Query.orderAsc("order")] }),
-  listByCourse: (courseId: string) =>
-    listDocuments(collections.lessons, { queries: [Query.equal("courseId", courseId), Query.orderAsc("order")] }),
+  listByModule: (moduleId: string, limit = 100) =>
+    listDocuments(collections.lessons, { queries: [Query.equal("moduleId", moduleId), Query.orderAsc("order")], limit }),
+  listByCourse: (courseId: string, limit = 100) =>
+    listDocuments(collections.lessons, { queries: [Query.equal("courseId", courseId), Query.orderAsc("order")], limit }),
 }
 
 // ─── Resources ────────────────────────────────────
 
 export const resourcesDb = {
-  list: (params?: ListParams) => listDocuments(collections.resources, params),
+  list: (params?: ListParams) => listDocuments(collections.resources, { ...params, limit: params?.limit || 100 }),
   get: (id: string) => getDocument(collections.resources, id),
   create: (id: string, data: Record<string, unknown>) => createDocument(collections.resources, id, data, true),
   delete: (id: string) => deleteDocument(collections.resources, id, true),
-  listByLesson: (lessonId: string) =>
-    listDocuments(collections.resources, { queries: [Query.equal("lessonId", lessonId)] }),
+  listByLesson: (lessonId: string, limit = 100) =>
+    listDocuments(collections.resources, { queries: [Query.equal("lessonId", lessonId)], limit }),
 }
 
 // ─── Enrollments ──────────────────────────────────
@@ -156,18 +156,24 @@ export const progressDb = {
   },
   listByUserAndCourse: (userId: string, courseId: string) =>
     listDocuments(collections.progress, { queries: [Query.equal("userId", userId), Query.equal("courseId", courseId)] }),
+  // Batch fetch progress for multiple users in a course (prevents N+1 queries)
+  listByCourseAndUsers: (courseId: string, userIds: string[]) =>
+    listDocuments(collections.progress, {
+      queries: [Query.equal("courseId", courseId)],
+      limit: 5000, // Load all progress for this course at once
+    }),
 }
 
 // ─── Quizzes ──────────────────────────────────────
 
 export const quizzesDb = {
-  list: (params?: ListParams) => listDocuments(collections.quizzes, params),
+  list: (params?: ListParams) => listDocuments(collections.quizzes, { ...params, limit: params?.limit || 100 }),
   get: (id: string) => getDocument(collections.quizzes, id),
   create: (id: string, data: Record<string, unknown>) => createDocument(collections.quizzes, id, data, true),
   update: (id: string, data: Record<string, unknown>) => updateDocument(collections.quizzes, id, data, true),
   delete: (id: string) => deleteDocument(collections.quizzes, id, true),
-  listByCourse: (courseId: string) =>
-    listDocuments(collections.quizzes, { queries: [Query.equal("courseId", courseId)] }),
+  listByCourse: (courseId: string, limit = 100) =>
+    listDocuments(collections.quizzes, { queries: [Query.equal("courseId", courseId)], limit }),
 }
 
 export const quizQuestionsDb = {
