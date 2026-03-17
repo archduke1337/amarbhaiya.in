@@ -148,7 +148,24 @@ export async function signUp(formData: FormData, redirectTo?: string | null) {
 
   try {
     const { account } = await createGuestClient()
-    await account.create(ID.unique(), email, password, name)
+    const user = await account.create(ID.unique(), email, password, name)
+    
+    // Create the user profile in the database
+    const { databases } = await createAdminClient()
+    await databases.createDocument(
+      APPWRITE_CONFIG.databaseId,
+      APPWRITE_CONFIG.collections.users,
+      user.$id,
+      {
+        userId: user.$id,
+        name: name,
+        email: email,
+        labels: ["student"], // default role
+        isVerified: false,
+        isActive: true,
+      }
+    )
+
     const session = await account.createEmailPasswordSession(email, password)
 
     ;(await cookies()).set(COOKIE_NAME, session.secret, {
