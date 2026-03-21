@@ -9,6 +9,7 @@ import Link from "next/link"
 import { signIn } from "@/lib/appwrite/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { OAuthButtons } from "@/components/auth/OAuthButtons"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ROUTES } from "@/config/routes"
@@ -43,8 +44,15 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
         <CardDescription>Sign in to continue your learning journey</CardDescription>
       </CardHeader>
+      <CardContent className="space-y-4">
+        <OAuthButtons />
+        <div className="relative my-2">
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
+        </div>
+      </CardContent>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-0">
           {error && (
             <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
               {error}

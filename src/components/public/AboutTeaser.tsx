@@ -1,5 +1,5 @@
 /**
- * @fileoverview AboutTeaser component stub replaced with an elegant text block.
+ * @fileoverview AboutTeaser component — brief intro on the homepage linking to the full About page.
  */
 "use client"
 import Link from "next/link"
@@ -13,8 +13,10 @@ export function AboutTeaser() {
           Who is Amarnath Bhaiya?
         </h2>
         <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8 font-sans">
-          I'm an engineer who struggled through the exact same confusing concepts you are facing today. 
-          My goal is to distill a decade of Silicon Valley architectural experience into mental models that instantly click.
+          I&apos;m a mentor and system builder who struggled through the exact same confusing
+          concepts you&apos;re facing today. My goal is to distill real engineering
+          experience into mental models that instantly click — so you can skip the
+          years of trial-and-error I went through.
         </p>
         <Link href="/about" className="inline-flex items-center text-primary font-medium hover:underline text-lg">
           Read my full story <ArrowRight className="ml-2 w-5 h-5" />
